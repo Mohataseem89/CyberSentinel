@@ -23,9 +23,8 @@ def health():
 def home():
     return "CyberSentinel Backend Running - Hybrid ML Analysis"
 
-# ==============================
-# 🔐 FILE SCAN ENDPOINT (ClamAV)
-# ==============================
+
+#Ffila scna claamav wala
 @app.route("/api/scan", methods=["POST"])
 def scan_uploaded_file():
     if "file" not in request.files:
@@ -39,7 +38,7 @@ def scan_uploaded_file():
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     file.save(file_path)
 
-    # 🔍 Scan using ClamAV
+    #  Scan using ClamAV
     scan_result = scan_file(file_path)
 
     # Delete file after scanning
@@ -56,9 +55,9 @@ def scan_uploaded_file():
     else:
         return jsonify({"error": scan_result.get("message", "Scan failed")}), 500
 
-# ==============================
-# 🌐 URL ANALYSIS (NEW HYBRID APPROACH)
-# ==============================
+
+#  URL ANALYSIS (NEW HYBRID APPROACH)
+
 @app.route("/analyze", methods=["POST", "OPTIONS"])
 def analyze():
     if request.method == "OPTIONS":
@@ -88,6 +87,6 @@ def analyze():
         }), 500
 
 if __name__ == "__main__":
-    print("🚀 CyberSentinel Backend - Hybrid ML Analysis System")
-    print("✅ ML Model + VirusTotal + Content Analysis")
+    print("CyberSentinel Backend - Hybrid ML Analysis System")
+    print("ML Model + VirusTotal + Content Analysis")
     app.run(debug=True, host="0.0.0.0", port=5000)
