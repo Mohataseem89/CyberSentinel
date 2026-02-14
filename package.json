@@ -12,6 +12,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.9",
+    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/vite": "^4.1.14",
     "axios": "^1.13.5",
     "body-parser": "^2.2.0",
