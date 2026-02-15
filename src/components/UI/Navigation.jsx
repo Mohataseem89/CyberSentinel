@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Search, Flag, Menu, X } from 'lucide-react';
+import { Shield, Search, Flag, Menu, X , QrCode} from 'lucide-react';
+// import {  } from 'lucide-react';
+
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -9,7 +11,9 @@ export default function Navigation() {
 
   const navItems = [
     { path: '/', label: 'URL Analysis', icon: Search },
-    { path: '/reporturl', label: 'Report URL', icon: Flag }
+    { path: '/reporturl', label: 'Report URL', icon: Flag },
+    { path: '/qrcode', label: 'QR Scanner', icon: QrCode }  
+
   ];
 
   const handleNavigation = (path) => {

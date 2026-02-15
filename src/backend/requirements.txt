@@ -17,3 +17,7 @@ tldextract==5.1.1
 python-dotenv==1.0.0
 urllib3==2.1.0
 certifi==2023.11.17
+
+opencv-python-headless==4.8.1.78
+pyzbar==0.1.9
+Pillow==10.1.0

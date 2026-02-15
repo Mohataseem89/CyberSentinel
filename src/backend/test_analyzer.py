@@ -5,7 +5,7 @@ def test_analyzer():
     
     test_urls = [
         "https://google.com",
-        "http://phishing-test.com/login",
+        "http://facebook-login-verification-alert.com",
         "https://github.com",
         "http://verify-paypal-account.tk"
     ]

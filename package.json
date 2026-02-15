@@ -12,12 +12,9 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.9",
+    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/vite": "^4.1.14",
-<<<<<<< HEAD
-    "axios": "^1.12.2",
-=======
     "axios": "^1.13.5",
->>>>>>> ml-integration
     "body-parser": "^2.2.0",
     "chart.js": "^4.5.0",
     "clsx": "^2.1.1",

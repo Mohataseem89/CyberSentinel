@@ -4,6 +4,8 @@ import Navigation from './components/UI/Navigation';
 import URLAnalyzer from './components/features/URLAnalyzer';
 import FeedbackForm from './components/features/FeedbackForm';
 import './App.css';
+import QRScanner from './components/features/QRScanner';
+
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
           <Route path="/reporturl" element={<FeedbackForm />} />
           <Route path="/feedback" element={<Navigate to="/reporturl" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/qrcode" element={<QRScanner />} />
+
         </Routes>
         
         <Toaster 

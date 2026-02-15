@@ -32,10 +32,21 @@ export const analyzeURL = async (url) => {
   return response.data;
 };
 
-export const submitFeedback = async (feedbackData) => {
-  const response = await api.post('/api/feedback', feedbackData);
-  return response.data;
-};
+
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  'https://nnqgdzzoernnyqvtsivz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ucWdkenpvZXJubnlxdnRzaXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNzA1MDcsImV4cCI6MjA4NjY0NjUwN30.9c-xoRT-YdCr0YOttBw6okXFpomO1hjsy8lMvXeayfo'
+);
+
+export async function submitFeedback(data) {
+  const { error } = await supabase
+    .from('feedback')
+    .insert([data]);
+
+  if (error) throw error;
+}
 
 export const getFeedbackStats = async () => {
   const response = await api.get('/api/feedback/stats');
