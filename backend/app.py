@@ -73,10 +73,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
 
-# Import blueprints
-# from routes.auth import auth_bp
-# from analytics import analytics_bp
-
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 # app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
@@ -87,9 +83,6 @@ from services.url_analyzer import HybridURLAnalyzer
 from services.qr_service import QRCodeScanner
 # from clamav_service import scan_file
 from database import save_scan
-
-
-
 
 
 def admin_required():
@@ -496,11 +489,6 @@ def reload_model():
 
 
 
-
-
-
-
-
 # QR CODE SCANNER
 @app.route("/api/qr/scan", methods=["POST"])
 def scan_qr():
@@ -566,11 +554,8 @@ def scan_qr():
         }), 200
         
     except Exception as e:
-        print(f"⚠️ QR scan error: {e}")
+        print(f"QR scan error: {e}")
         return jsonify({"error": str(e)}), 500
-    
-
-  
 
 # START SERVER
 if __name__ == "__main__":
