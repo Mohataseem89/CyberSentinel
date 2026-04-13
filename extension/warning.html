@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚠️ Dangerous Website Blocked - CyberSentinel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1e1e1e 0%, #2d1e1e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 700px;
+      background: white;
+      border-radius: 16px;
+      padding: 48px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #dc2626;
+      margin-bottom: 16px;
+    }
+
+    .threat-score {
+      display: inline-block;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 8px 24px;
+      border-radius: 24px;
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 24px;
+    }
+
+    .description {
+      font-size: 18px;
+      color: #374151;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .blocked-url {
+      background: #f3f4f6;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 32px;
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .warnings {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+
+    .warnings h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 12px;
+    }
+
+    .warnings ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .warnings li {
+      padding: 8px 0;
+      color: #78350f;
+      font-size: 14px;
+    }
+
+    .warnings li::before {
+      content: '⚠️ ';
+      margin-right: 8px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #b91c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #6b7280;
+      border: 2px solid #e5e7eb;
+    }
+
+    .btn-danger:hover {
+      background: #f9fafb;
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+
+    .footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: #3b82f6;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🚨</div>
+    
+    <h1>Dangerous Website Blocked</h1>
+    
+    <div class="threat-score" id="threatScore">
+      Threat Score: Loading...
+    </div>
+    
+    <p class="description">
+      <strong>CyberSentinel</strong> has detected that this website is highly dangerous 
+      and has been blocked to protect your security and privacy.
+    </p>
+    
+    <div class="blocked-url" id="blockedUrl">
+      Loading URL...
+    </div>
+    
+    <div class="warnings">
+      <h3>⚠️ Detected Threats:</h3>
+      <ul id="threatList">
+        <li>Phishing attempt detected</li>
+        <li>Malicious content identified</li>
+        <li>High risk to personal information</li>
+        <li>Potential malware distribution</li>
+      </ul>
+    </div>
+    
+    <div class="buttons">
+      <button class="btn btn-primary" id="goBackBtn">
+        ← Go Back to Safety
+      </button>
+      
+      <button class="btn btn-secondary" id="goHomeBtn">
+        🏠 Go to Homepage
+      </button>
+      
+      <button class="btn btn-danger" id="proceedBtn">
+        ⚠️ Proceed Anyway (Not Recommended)
+      </button>
+    </div>
+    
+    <div class="footer">
+      Protected by <strong>CyberSentinel</strong> • 
+      <a href="#" id="reportLink">Report False Positive</a>
+    </div>
+  </div>
+
+  <script>
+    // Get URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const blockedUrl = params.get('url');
+    const threatScore = params.get('score');
+    const verdict = params.get('verdict');
+    
+    // Display information
+    document.getElementById('blockedUrl').textContent = blockedUrl || 'Unknown URL';
+    document.getElementById('threatScore').textContent = `Threat Score: ${threatScore}% - ${verdict || 'High Risk'}`;
+    
+    // Threat list based on verdict
+    const threatList = document.getElementById('threatList');
+    threatList.innerHTML = '';
+    
+    if (verdict === 'Phishing') {
+      threatList.innerHTML = `
+        <li>Phishing website designed to steal credentials</li>
+        <li>Attempts to impersonate legitimate services</li>
+        <li>May collect personal and financial information</li>
+        <li>High risk of identity theft</li>
+      `;
+    } else if (verdict === 'Malicious') {
+      threatList.innerHTML = `
+        <li>Malicious code detected on website</li>
+        <li>Potential malware distribution</li>
+        <li>Risk of device infection</li>
+        <li>Unauthorized data collection</li>
+      `;
+    } else {
+      threatList.innerHTML = `
+        <li>Suspicious website activity detected</li>
+        <li>High threat score (${threatScore}%)</li>
+        <li>Potential security risks identified</li>
+        <li>Recommended to avoid this site</li>
+      `;
+    }
+    
+    // Button handlers
+    document.getElementById('goBackBtn').addEventListener('click', () => {
+      window.history.back();
+    });
+    
+    document.getElementById('goHomeBtn').addEventListener('click', () => {
+      window.location.href = 'https://www.google.com';
+    });
+    
+    document.getElementById('proceedBtn').addEventListener('click', () => {
+      if (confirm('⚠️ WARNING: This site is dangerous!\n\nProceeding may expose you to:\n- Phishing attacks\n- Malware infections\n- Data theft\n- Identity fraud\n\nAre you absolutely sure you want to continue?')) {
+        window.location.href = blockedUrl;
+      }
+    });
+    
+    document.getElementById('reportLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.open('http://localhost:5173/reporturl?url=' + encodeURIComponent(blockedUrl));
+    });
+  </script>
+</body>
+</html>

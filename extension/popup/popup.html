@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberSentinel</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L4 6V11C4 16.55 7.84 21.74 12 23C16.16 21.74 20 16.55 20 11V6L12 2Z" fill="#3B82F6"/>
+          <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white"/>
+        </svg>
+        <h1>CyberSentinel</h1>
+      </div>
+    </div>
+
+    <!-- Current Page Status -->
+    <div class="current-page">
+      <h3>Current Page</h3>
+      <div id="currentUrlBox" class="url-box">
+        <span id="currentUrl">Loading...</span>
+      </div>
+      <div id="statusBox" class="status-box">
+        <div class="status-indicator" id="statusIndicator"></div>
+        <span id="statusText">Checking...</span>
+      </div>
+      <button id="scanCurrentBtn" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L4 6V11C4 16.55 7.84 21.74 12 23C16.16 21.74 20 16.55 20 11V6L12 2Z" fill="currentColor"/>
+        </svg>
+        Scan This Page
+      </button>
+    </div>
+
+    <!-- Quick URL Check -->
+    <div class="quick-check">
+      <h3>Quick URL Check</h3>
+      <input 
+        type="text" 
+        id="quickUrlInput" 
+        placeholder="Enter URL to check..."
+        class="url-input"
+      >
+      <button id="quickScanBtn" class="btn btn-secondary">Check URL</button>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsSection" class="results" style="display: none;">
+      <h3>Analysis Results</h3>
+      <div class="result-card">
+        <div class="result-header">
+          <div id="resultIcon" class="result-icon"></div>
+          <div>
+            <div id="resultVerdict" class="result-verdict"></div>
+            <div id="resultScore" class="result-score"></div>
+          </div>
+        </div>
+        <div id="resultDetails" class="result-details"></div>
+      </div>
+    </div>
+
+    <!-- Recent Scans -->
+    <div class="recent-scans">
+      <h3>Recent Scans</h3>
+      <div id="recentList" class="recent-list">
+        <p class="empty-state">No recent scans</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <button id="settingsBtn" class="footer-btn">Settings</button>
+      <button id="dashboardBtn" class="footer-btn">Open Dashboard</button>
+    </div>
+
+  </div>
+
+  <script src="../utils/api.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

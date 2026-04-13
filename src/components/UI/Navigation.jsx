@@ -1,18 +1,38 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Search, Flag, Menu, X , QrCode} from 'lucide-react';
+import { Shield, Search, Flag, Menu, X , QrCode, Mail, BarChart3} from 'lucide-react';
 // import {  } from 'lucide-react';
+// import { Mail } from 'lucide-react';
+// import { BarChart3 } from 'lucide-react';
+
+
 
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const userData = localStorage.getItem('user');
+  let currentUser = null;
+
+  try {
+    currentUser = userData ? JSON.parse(userData) : null;
+  } catch {
+    currentUser = null;
+  }
+
+  const isAdmin = currentUser?.role === 'admin';
 
   const navItems = [
     { path: '/', label: 'URL Analysis', icon: Search },
     { path: '/reporturl', label: 'Report URL', icon: Flag },
-    { path: '/qrcode', label: 'QR Scanner', icon: QrCode }  
+    { path: '/qrcode', label: 'QR Scanner', icon: QrCode },
+    // { path: '/emailscan', label: 'Email Scanner', icon: Mail }  
+    { path: '/dashboard', label: 'Dashboard', icon: BarChart3 }, 
+    ...(isAdmin ? [{ path: '/admin/feedback', label: 'Admin Panel', icon: Shield }] : []),
+    
+
+
 
   ];
 
@@ -20,6 +40,12 @@ export default function Navigation() {
     navigate(path);
     setMobileMenuOpen(false);
   };
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    navigate('/login');
+    setMobileMenuOpen(false);
+} ;
 
   const isActive = (path) => {
     if (path === '/') {
@@ -61,6 +87,21 @@ export default function Navigation() {
                 </button>
               );
             })}
+            {currentUser ? (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                  Logout
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleNavigation('/login')}
+                  className="flex items-center px-4 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50"
+                >
+                  Login
+                </button>
+              )}
           </div>
 
           {/* Mobile menu button */}

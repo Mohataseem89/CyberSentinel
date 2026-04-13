@@ -16,6 +16,7 @@ export default function FeedbackForm() {
     description: '',
     category: ''
   });
+
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -27,15 +28,15 @@ export default function FeedbackForm() {
   ];
 
   const categories = [
-    { value: 'false_negative', label: 'False Negative', description: 'Our system marked it as safe, but it\'s actually malicious' },
-    { value: 'false_positive', label: 'False Positive', description: 'Our system marked it as malicious, but it\'s actually safe' },
+    { value: 'false_negative', label: 'False Negative', description: "Our system marked it as safe, but it's actually malicious" },
+    { value: 'false_positive', label: 'False Positive', description: "Our system marked it as malicious, but it's actually safe" },
     { value: 'new_threat', label: 'New Threat', description: 'Recently discovered malicious website not in our database' },
     { value: 'improvement', label: 'General Improvement', description: 'Suggestions for better detection accuracy' }
   ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.url.trim()) {
       toast.error('Please enter a URL');
       return;
@@ -57,21 +58,28 @@ export default function FeedbackForm() {
       return;
     }
 
+    if (
+      (formData.category === 'false_negative' || formData.category === 'false_positive') &&
+      !formData.ourPrediction
+    ) {
+      toast.error('Please select what CyberSentinel predicted');
+      return;
+    }
+
     setLoading(true);
 
     try {
       await submitFeedback({
         url: formData.url.trim(),
-        actualThreat: formData.actualThreat,
-        ourPrediction: formData.ourPrediction,
-        description: formData.description.trim(),
         category: formData.category,
-        submittedAt: new Date().toISOString()
+        actual_threat: formData.actualThreat,
+        our_prediction: formData.ourPrediction || '',
+        description: formData.description.trim()
       });
 
       toast.success('🎉 Thank you! Your feedback helps improve our detection system');
       setSubmitted(true);
-      
+
       setTimeout(() => {
         setFormData({
           url: '',
@@ -82,17 +90,16 @@ export default function FeedbackForm() {
         });
         setSubmitted(false);
       }, 3000);
-
     } catch (error) {
       console.error('Feedback submission failed:', error);
-      toast.error('Failed to submit feedback. Please try again.');
+      toast.error(error?.response?.data?.error || 'Failed to submit feedback. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   if (submitted) {
@@ -104,9 +111,7 @@ export default function FeedbackForm() {
           <p className="text-gray-600 mb-6">
             Your feedback has been submitted successfully. Our AI will learn from your input to provide better protection.
           </p>
-          <div className="text-sm text-gray-500">
-            Redirecting back to form...
-          </div>
+          <div className="text-sm text-gray-500">Redirecting back to form...</div>
         </Card>
       </div>
     );
@@ -114,7 +119,6 @@ export default function FeedbackForm() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
@@ -129,11 +133,8 @@ export default function FeedbackForm() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-2 gap-8">
-          
-          {/* Main Form */}
           <div>
             <Card className="p-6">
               <div className="flex items-center mb-6">
@@ -142,17 +143,15 @@ export default function FeedbackForm() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* URL Input */}
                 <Input
                   label="Website URL"
                   placeholder="https://suspicious-website.com"
                   value={formData.url}
-                  className=" w-full"
+                  className="w-full"
                   onChange={(e) => handleInputChange('url', e.target.value)}
                   required
                 />
 
-                {/* Feedback Category */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Feedback Category <span className="text-danger-500">*</span>
@@ -175,11 +174,10 @@ export default function FeedbackForm() {
                   </div>
                 </div>
 
-                {/* Our Prediction */}
                 {(formData.category === 'false_negative' || formData.category === 'false_positive') && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      What did CyberSentinel predict?
+                      What did CyberSentinel predict? <span className="text-danger-500">*</span>
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       {threatLevels.map((threat) => {
@@ -205,7 +203,6 @@ export default function FeedbackForm() {
                   </div>
                 )}
 
-                {/* Actual Threat Level */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Actual Threat Level <span className="text-danger-500">*</span>
@@ -233,7 +230,6 @@ export default function FeedbackForm() {
                   </div>
                 </div>
 
-                {/* Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Additional Details (Optional)
@@ -247,7 +243,6 @@ export default function FeedbackForm() {
                   />
                 </div>
 
-                {/* Submit Button */}
                 <Button
                   type="submit"
                   loading={loading}
@@ -261,9 +256,7 @@ export default function FeedbackForm() {
             </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* How it Works */}
             <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
               <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
                 <Info className="w-5 h-5 mr-2" />
@@ -277,7 +270,7 @@ export default function FeedbackForm() {
                   'Better protection for all users'
                 ].map((step, index) => (
                   <div key={index} className="flex items-start">
-                    <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">
+                    <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 shrink-0">
                       {index + 1}
                     </div>
                     <span className="text-sm text-blue-800">{step}</span>
@@ -286,7 +279,6 @@ export default function FeedbackForm() {
               </div>
             </Card>
 
-            {/* Stats */}
             <Card className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Shield className="w-5 h-5 mr-2" />

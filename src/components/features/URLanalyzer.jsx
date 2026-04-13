@@ -502,3 +502,28 @@ export default function URLAnalyzer() {
     </div>
   );
 }
+
+
+
+const saveScanToHistory = (url, result) => {
+  const scan = {
+    id: Date.now(),
+    url: url,
+    domain: new URL(url).hostname,
+    verdict: result.final_verdict,
+    threatScore: result.threat_score,
+    timestamp: new Date().toISOString(),
+    mlPrediction: result.ml_prediction?.prediction || 'unknown',
+    virusTotalDetections: result.virustotal_analysis?.malicious || 0
+  };
+
+  const history = JSON.parse(localStorage.getItem('scanHistory')) || [];
+  history.unshift(scan);
+  
+  // Keep last 100 scans
+  const trimmed = history.slice(0, 100);
+  localStorage.setItem('scanHistory', JSON.stringify(trimmed));
+};
+
+// Call this after successful scan:
+// saveScanToHistory(url, result);
