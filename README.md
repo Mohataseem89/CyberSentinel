@@ -123,7 +123,7 @@ Password: admin123
 ## How it works 
 1. User enters a URL or visits a website
 2. Extension / frontend sends URL to backend
-# Backend performs:
+**Backend performs:**
    ML prediction
    VirusTotal check
    Content analysis
