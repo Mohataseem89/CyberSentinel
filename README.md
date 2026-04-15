@@ -75,7 +75,7 @@ python ml_model/train_model_simple.py
 
 ```
 ## Add Environment Variables
-#Create a .env file inside the backend folder:
+**Create a .env file inside the backend folder:**
 ```
 VIRUSTOTAL_API_KEY=your_api_key_here
 SECRET_KEY=your_secret_key
