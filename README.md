@@ -81,9 +81,9 @@ VIRUSTOTAL_API_KEY=your_api_key_here
 SECRET_KEY=your_secret_key
 ```
 Get VirusTotal API key from: https://www.virustotal.com/gui/join-us
-```
-```
-Start Backend Server
+
+
+# Start Backend Server
 ```
 python app.py
 ```
