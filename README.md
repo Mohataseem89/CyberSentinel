@@ -152,7 +152,7 @@ Password: admin123
  [LinkedIn](https://www.linkedin.com/in/saad-shaikh-1b9265259/) • [GitHub](https://github.com/SS07158)
 
  **Ansari Hussain**
- Connect with U: [LinkedIn](https://www.linkedin.com/in/husain-ansari-7530572bb/) • [GitHub](https://github.com/71-husain)
+  [LinkedIn](https://www.linkedin.com/in/husain-ansari-7530572bb/) • [GitHub](https://github.com/71-husain)
 
  
 
