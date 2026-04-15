@@ -124,9 +124,9 @@ Password: admin123
 1. User enters a URL or visits a website
 2. Extension / frontend sends URL to backend
 3. **Backend performs:**
-   ML prediction
-   VirusTotal check
-   Content analysis
+   - ML prediction
+   - VirusTotal check
+   - Content analysis
 4. Results are combined into a threat score
 5. Final verdict is returned (Benign / Suspicious / Phishing)
 
