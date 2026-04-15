@@ -22,7 +22,7 @@ It also includes a Chrome Extension for real-time protection.
 
 ---
 
-## 📦 Tech Stack
+##  Tech Stack
 
 **Frontend**
 - React (Vite)
