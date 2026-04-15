@@ -136,4 +136,24 @@ Password: admin123
 - Approved data is added to dataset
 - Model is retrained using:
 - POST /api/admin/retrain-model
+
+
+
+## Authors
+**Connect with Us**
+**Mohataseem Khan**
+ [LinkedIn](https://www.linkedin.com/in/mohataseem-khan/) • [GitHub](https://github.com/Mohataseem89)
+
+ **Rehan Khan**
+ [LinkedIn](https://www.linkedin.com/in/mohataseem-khan/) • [GitHub](https://github.com/RehanKhan1704)
+ 
+ **Saad Shaikh**
+ [LinkedIn](https://www.linkedin.com/in/saad-shaikh-1b9265259/) • [GitHub](https://github.com/SS07158)
+
+ **Ansari Hussain**
+ Connect with U: [LinkedIn](https://www.linkedin.com/in/husain-ansari-7530572bb/) • [GitHub](https://github.com/71-husain)
+
+ 
+
+
    
