@@ -140,7 +140,8 @@ Password: admin123
 
 
 ## Authors
-**Connect with Us**
+**Connect with Us**:
+
 **Mohataseem Khan**
  [LinkedIn](https://www.linkedin.com/in/mohataseem-khan/) • [GitHub](https://github.com/Mohataseem89)
 
