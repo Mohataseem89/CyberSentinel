@@ -56,13 +56,14 @@ cd backend
 python -m venv venv
 venv\Scripts\activate
 ```
-```
+
 # Mac/Linux
 ```
 python3 -m venv venv
 source venv/bin/activate
+
 ```
-```
+
 # Dependencies:
 ```
 pip install -r requirements.txt
