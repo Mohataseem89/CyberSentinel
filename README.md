@@ -70,8 +70,8 @@ pip install -r requirements.txt
 ```
 # Download Dataset & Train Model:
 ```
-python ml_model/download_dataset.py
-python ml_model/train_model_simple.py
+python ml/download_dataset.py
+python ml/train_model.py
 
 ```
 ## Add Environment Variables
