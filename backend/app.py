@@ -33,9 +33,11 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 from config import Config
 app.config.from_object(Config)
 
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
 CORS(
     app,
-    resources={r"/*": {"origins": ["http://localhost:5173"]}},
+    resources={r"/*": {"origins": [frontend_url]}},
     supports_credentials=True
 )
 
@@ -67,11 +69,6 @@ def fresh_token_callback(jwt_header, jwt_payload):
     print("JWT fresh token required")
     return jsonify({"error": "Fresh token required"}), 401
 
-# Configure upload folder
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -81,7 +78,6 @@ app.register_blueprint(analytics_bp)
 # Import services
 from services.url_analyzer import HybridURLAnalyzer
 from services.qr_service import QRCodeScanner
-# from clamav_service import scan_file
 from database import save_scan
 
 

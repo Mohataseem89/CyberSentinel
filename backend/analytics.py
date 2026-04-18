@@ -1,11 +1,13 @@
 from flask import Blueprint, request, jsonify
 import psycopg2
 import psycopg2.extras
+import os
 from datetime import datetime, timedelta
 
 analytics_bp = Blueprint("analytics_bp", __name__)
 
-DATABASE_URL = "postgresql://postgres:PG%40dmin89@localhost:5432/cybersentinel"
+# DATABASE_URL = "postgresql://postgres:PG%40dmin89@localhost:5432/cybersentinel"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///cybersentinel.db")
 
 
 def get_connection():
