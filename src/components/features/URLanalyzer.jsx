@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, CheckCircle, XCircle, TrendingUp, Activity } from 'lucide-react';
 import axios from 'axios';
+import { analyzeURL } from '../../services/api';
 
 export default function URLAnalyzer() {
   const [url, setUrl] = useState('');
@@ -30,23 +31,32 @@ export default function URLAnalyzer() {
     setResult(null);
 
     try {
-      const response = await axios.post('http://localhost:5000/analyze', { url });
-      setResult(response.data);
-      // Save to recent searches
-      const updated = [url, ...recentSearches.filter(u => u !== url)].slice(0, 5);
-      setRecentSearches(updated);
-      localStorage.setItem('recentUrls', JSON.stringify(updated));
+  // const API_BASE_URL =
+  //   import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-    } catch (error) {
-      console.error('Analysis error:', error);
-      setResult({
-        final_verdict: 'Error',
-        threat_score: 0,
-        error: error.response?.data?.error || 'Failed to analyze URL. Check if backend is running.'
-      });
-    } finally {
-      setLoading(false);
-    }
+  // const response = await axios.post(`${API_BASE_URL}/analyze`, { url });
+  const response = await analyzeURL(url);
+  setResult(response);
+
+  // setResult(response.data);
+
+  // Save to recent searches
+  const updated = [url, ...recentSearches.filter((u) => u !== url)].slice(0, 5);
+  setRecentSearches(updated);
+  localStorage.setItem('recentUrls', JSON.stringify(updated));
+
+  } catch (error) {
+    console.error('Analysis error:', error);
+    setResult({
+      final_verdict: 'Error',
+      threat_score: 0,
+      error:
+        error.response?.data?.error ||
+        'Failed to analyze URL. Check if backend is running.'
+    });
+  } finally {
+    setLoading(false);
+  }
   };
 
   const getVerdictColor = (verdict) => {

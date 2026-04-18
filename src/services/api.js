@@ -50,7 +50,7 @@ api.interceptors.response.use(
 );
 
 export const analyzeURL = async (url) => {
-  const response = await api.post('/api/analyze-url', { url });
+  const response = await api.post('/analyze', { url });
   return response.data;
 };
 
@@ -114,5 +114,24 @@ export const exportApprovedFeedback = async () => {
 
   window.URL.revokeObjectURL(url);
 };
+
+export const loginUser = async (formData) => {
+  const response = await api.post('/api/auth/login', formData);
+  return response.data;
+};
+export const registerUser = async (formData) => {
+  const response = await api.post('/api/auth/register', formData);
+  return response.data;
+};
+
+export const scanQRCode = async (formData) => {
+  const response = await api.post('/api/qr/scan', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
 
 export default api;

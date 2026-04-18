@@ -14,13 +14,22 @@ import sys
 from services.ml_predictor import predictor
 from flask_jwt_extended.exceptions import JWTExtendedException
 from routes.auth import auth_bp
+from services.qr_service import QRCodeScanner
 
 # Load environment variables
 load_dotenv()
 
+
+
+
+
 # Initialize Flask app
 app = Flask(__name__)
 # app = Flask(__name__)
+
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 print(">>> LOADED UPDATED app.py <<<")
 print(">>> FILE PATH:", __file__)
@@ -104,7 +113,6 @@ def health():
     return jsonify({"status": "healthy", "analyzer": "Hybrid ML + VirusTotal + Content"})
 
 # URL ANALYSIS
-
 @app.route("/analyze", methods=["POST"])
 def analyze():
     """Analyze URL for phishing"""

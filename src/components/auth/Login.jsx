@@ -4,6 +4,8 @@ import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+import { loginUser } from '../../services/api';
+
 export default function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -25,9 +27,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      // const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      // const response = await axios.post(`${API_BASE_URL}/api/auth/login`, formData);
+      const { access_token, user } = await loginUser(formData);
 
-      const { access_token, user } = response.data;
+      // const { access_token, user } = response.data;
 
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user', JSON.stringify(user));

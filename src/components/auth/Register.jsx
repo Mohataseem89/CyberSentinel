@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Shield, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { registerUser } from '../../services/api';
+
 
 export default function Register() {
   const navigate = useNavigate();
@@ -42,9 +44,8 @@ export default function Register() {
         password: formData.password,
       };
 
-      const response = await axios.post('http://localhost:5000/api/auth/register', payload);
-
-      const { access_token, user } = response.data;
+      // const response = await axios.post('http://localhost:5000/api/auth/register', payload);
+      const { access_token, user } = await registerUser(payload);
 
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user', JSON.stringify(user));

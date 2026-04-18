@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Camera, Upload, AlertTriangle, CheckCircle, XCircle, QrCode, Link, Shield, Zap } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { scanQRCode } from '../../services/api';
 
 export default function QRScanner() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -48,30 +49,30 @@ export default function QRScanner() {
     const formData = new FormData();
     formData.append('image', selectedFile);
 
-    try {
-      const response = await axios.post('http://localhost:5000/api/qr/scan', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+  try {
+    const data = await scanQRCode(formData);
 
-      setQrResult(response.data);
+    setQrResult(data);
 
-      if (response.data.is_url) {
-        toast.success(' QR code scanned and URL analyzed!');
-      } else {
-        toast.success(' QR code scanned successfully!');
-      }
-
-    } catch (error) {
-      console.error('QR scan error:', error);
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Failed to scan QR code';
-      toast.error(errorMsg);
-      setQrResult({ error: errorMsg });
-    } finally {
-      setLoading(false);
+    if (data.is_url) {
+      toast.success('QR code scanned and URL analyzed!');
+    } else {
+      toast.success('QR code scanned successfully!');
     }
-  };
+  } catch (error) {
+    console.error('QR scan error:', error);
+    const errorMsg =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
+      'Failed to scan QR code';
+
+    toast.error(errorMsg);
+    setQrResult({ error: errorMsg });
+  } finally {
+    setLoading(false);
+  }
+  }
 
   const handleReset = () => {
     setSelectedFile(null);
