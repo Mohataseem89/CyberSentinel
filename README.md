@@ -19,6 +19,7 @@ It also includes a Chrome Extension for real-time protection.
 - Model retraining system
 - Chrome extension integration
 - JWT-based authentication
+- QR embedded URL Scanning and Analysis
 
 ---
 
