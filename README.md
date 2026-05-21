@@ -147,7 +147,7 @@ Password: admin123
  [LinkedIn](https://www.linkedin.com/in/mohataseem-khan/) • [GitHub](https://github.com/Mohataseem89)
 
  **Rehan Khan**
- [LinkedIn](https://www.linkedin.com/in/mohataseem-khan/) • [GitHub](https://github.com/RehanKhan1704)
+ [LinkedIn](https://www.linkedin.com/in/rehan-khan-5460b6352/) • [GitHub](https://github.com/RehanKhan1704)
  
  **Saad Shaikh**
  [LinkedIn](https://www.linkedin.com/in/saad-shaikh-1b9265259/) • [GitHub](https://github.com/SS07158)
