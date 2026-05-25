@@ -45,17 +45,7 @@ It also includes a Chrome Extension for real-time protection.
 ![Grocery Store](./assets/analytics1.png)
 
 ---
-)
 
-###  Restaurant Listing
-
-![Restaurant Listing](./assets/restaurants.png)
-
-###  Grocery Store
-
-![Grocery Store](./assets/grocery.png)
-
----
 
 
 ## Features
