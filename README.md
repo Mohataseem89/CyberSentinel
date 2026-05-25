@@ -10,19 +10,39 @@ CyberSentinel is a full-stack cybersecurity web application that detects malicio
 It also includes a Chrome Extension for real-time protection.
 
 ---
+
+###  Login Page
+
+![Grocery Store](./assets/login.png)
 ###  Home Page
 
 ![Home Page](###  Home Page
 
 ![Home Page](./assets/home.png)
 
-###  Restaurant Listing
+###  Output
 
-![Restaurant Listing](./assets/restaurants.png)
+![More Details on home page](./assets/home1.png)
 
-###  Grocery Store
+###  Report URL(feedback)
 
-![Grocery Store](./assets/grocery.png)
+![Grocery Store](./assets/report_url.png)
+
+###  feedback review panel
+
+![Grocery Store](./assets/feedback_review.png)
+
+###  QR Detection
+
+![Grocery Store](./assets/QR.png)
+
+###  URL Analytics
+
+![Grocery Store](./assets/analytics.png)
+
+###  Analytics using visual representation
+
+![Grocery Store](./assets/analytics1.png)
 
 ---
 )
