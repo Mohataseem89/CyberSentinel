@@ -16,7 +16,6 @@ It also includes a Chrome Extension for real-time protection.
 ![Grocery Store](./assets/login.png)
 ###  Home Page
 
-![Home Page](###  Home Page
 
 ![Home Page](./assets/home.png)
 
@@ -176,7 +175,6 @@ Password: admin123
 - POST /api/admin/retrain-model
 
 
-
 ## Authors
 **Connect with Us**:
 
@@ -191,8 +189,3 @@ Password: admin123
 
  **Ansari Husain**
   [LinkedIn](https://www.linkedin.com/in/husain-ansari-7530572bb/) • [GitHub](https://github.com/71-husain)
-
- 
-
-
-   
