@@ -1,48 +1,160 @@
 {
-  "accuracy": 0.922824,
-  "classification_report": {
-    "accuracy": 0.9228243819992461,
-    "legitimate": {
-      "f1-score": 0.9556156949951399,
-      "precision": 0.9228639347362165,
-      "recall": 0.9907776633847135,
-      "support": 68963.0
+  "calibration": {
+    "bins": [
+      {
+        "mean_predicted": 0.0243,
+        "observed_frequency": 0.026208
+      },
+      {
+        "mean_predicted": 0.151967,
+        "observed_frequency": 0.111087
+      },
+      {
+        "mean_predicted": 0.236271,
+        "observed_frequency": 0.259563
+      },
+      {
+        "mean_predicted": 0.346123,
+        "observed_frequency": 0.33548
+      },
+      {
+        "mean_predicted": 0.461555,
+        "observed_frequency": 0.444681
+      },
+      {
+        "mean_predicted": 0.521483,
+        "observed_frequency": 0.484187
+      },
+      {
+        "mean_predicted": 0.645273,
+        "observed_frequency": 0.650771
+      },
+      {
+        "mean_predicted": 0.76203,
+        "observed_frequency": 0.773171
+      },
+      {
+        "mean_predicted": 0.884841,
+        "observed_frequency": 0.855615
+      },
+      {
+        "mean_predicted": 0.982714,
+        "observed_frequency": 0.980106
+      }
+    ],
+    "expected_calibration_error": 0.017937
+  },
+  "immutable_holdout": {
+    "accuracy": 0.894889,
+    "brier_score": 0.075052,
+    "classification_report": {
+      "accuracy": 0.8948887285642932,
+      "legitimate": {
+        "f1-score": 0.9369150318089464,
+        "precision": 0.9144965701095614,
+        "recall": 0.9604602724758425,
+        "support": 29287.0
+      },
+      "macro avg": {
+        "f1-score": 0.8110177819061357,
+        "precision": 0.8475684214442485,
+        "recall": 0.7854441786020154,
+        "support": 36038.0
+      },
+      "phishing": {
+        "f1-score": 0.685120532003325,
+        "precision": 0.7806402727789354,
+        "recall": 0.6104280847281884,
+        "support": 6751.0
+      },
+      "weighted avg": {
+        "f1-score": 0.8897463579594611,
+        "precision": 0.8894212645077229,
+        "recall": 0.8948887285642932,
+        "support": 36038.0
+      }
     },
-    "macro avg": {
-      "f1-score": 0.8300726396394628,
-      "precision": 0.9226656623577463,
-      "recall": 0.7803338535329953,
-      "support": 82241.0
+    "confusion_matrix": [
+      [
+        28129,
+        1158
+      ],
+      [
+        2630,
+        4121
+      ]
+    ],
+    "confusion_matrix_labels": [
+      "legitimate",
+      "phishing"
+    ],
+    "f1_phishing": 0.685121,
+    "pr_auc": 0.792283,
+    "precision_phishing": 0.78064,
+    "recall_phishing": 0.610428,
+    "roc_auc": 0.921723,
+    "threshold": 0.5
+  },
+  "protocol": {
+    "calibration_split": "domain_grouped 15% of non-holdout data",
+    "dataset_governance": {
+      "class_balance": {
+        "legitimate": 344814,
+        "phishing": 66387
+      },
+      "conflicting_urls_excluded": 0,
+      "exact_duplicate_rows_removed": 0,
+      "raw_rows": 411201,
+      "source_sha256": "8399b37755fdbf6b44a660d3a790a17d99b9791107b7e6a156ab43e53e16f3c6",
+      "temporal_split": {
+        "reason": "The current source has no trustworthy collection timestamp column; dates must not be inferred from URLs.",
+        "status": "unavailable"
+      },
+      "usable_rows": 411201,
+      "valid_rows": 411201
     },
-    "phishing": {
-      "f1-score": 0.7045295842837856,
-      "precision": 0.9224673899792759,
-      "recall": 0.5698900436812773,
-      "support": 13278.0
-    },
-    "weighted avg": {
-      "f1-score": 0.9150772606615912,
-      "precision": 0.9227999116664258,
-      "recall": 0.9228243819992461,
-      "support": 82241.0
+    "immutable_holdout": "domain_grouped; excluded before model fit, calibrator fit, and threshold selection",
+    "temporal_split": {
+      "reason": "The current source has no trustworthy collection timestamp column; dates must not be inferred from URLs.",
+      "status": "unavailable"
     }
   },
-  "confusion_matrix": [
-    [
-      68327,
-      636
-    ],
-    [
-      5711,
-      7567
-    ]
-  ],
-  "confusion_matrix_labels": [
-    "legitimate",
-    "phishing"
-  ],
-  "f1_phishing": 0.70453,
-  "precision_phishing": 0.922467,
-  "recall_phishing": 0.56989,
-  "roc_auc": 0.952432
+  "slices": {
+    "ip_literal": {
+      "False": {
+        "accuracy": 0.894883,
+        "f1_phishing": 0.685016,
+        "precision_phishing": 0.780557,
+        "recall_phishing": 0.610313,
+        "rows": 36036
+      },
+      "True": {
+        "rows": 2,
+        "status": "insufficient_class_coverage"
+      }
+    },
+    "url_length_slice": {
+      "0-50": {
+        "accuracy": 0.88187,
+        "f1_phishing": 0.648956,
+        "precision_phishing": 0.717483,
+        "recall_phishing": 0.592379,
+        "rows": 23491
+      },
+      "101+": {
+        "accuracy": 0.845093,
+        "f1_phishing": 0.783061,
+        "precision_phishing": 0.977737,
+        "recall_phishing": 0.653036,
+        "rows": 1885
+      },
+      "51-100": {
+        "accuracy": 0.932377,
+        "f1_phishing": 0.740554,
+        "precision_phishing": 0.883262,
+        "recall_phishing": 0.637546,
+        "rows": 10662
+      }
+    }
+  }
 }

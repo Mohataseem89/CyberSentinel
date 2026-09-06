@@ -1,0 +1,3 @@
+# Derived evaluation data may contain submitted or licensed URLs. Keep it out of git.
+immutable_holdout.csv
+dataset_registry.json

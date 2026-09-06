@@ -1,4 +1,8 @@
 {
+  "calibration": {
+    "fitted_on": "domain_grouped non-holdout calibration split",
+    "method": "isotonic"
+  },
   "class_labels": [
     "legitimate",
     "phishing"
@@ -29,16 +33,21 @@
     "has_port"
   ],
   "feature_schema_version": 1,
-  "model_version": "url-rf-v1-8399b37755fd",
+  "holdout_rows": 36038,
+  "holdout_sha256": "20d8317507650fc25dba8fd1540f92981e15255d42c06c7e5a796fa789a6d1ef",
+  "model_version": "url-rf-v1-158b9501bf24",
   "random_state": 42,
-  "scikit_learn_version": "1.8.0",
-  "source_label_mapping": {
-    "bad": "phishing",
-    "good": "legitimate"
+  "risk_signal_quality": {
+    "f1_phishing": 0.685121,
+    "precision_phishing": 0.78064,
+    "recall_phishing": 0.610428
   },
-  "trained_at_utc": "2026-09-06T09:30:50.901073+00:00",
+  "scikit_learn_version": "1.8.0",
+  "split_strategy": "deterministic_group_shuffle_by_registrable_domain",
+  "trained_at_utc": "2026-09-06T11:47:47.882804+00:00",
   "training_parameters": {
+    "class_weight": "balanced_subsample",
     "max_depth": 20,
-    "n_estimators": 100
+    "n_estimators": 60
   }
 }
