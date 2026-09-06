@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 from config import Config
 import bcrypt
@@ -53,7 +53,9 @@ class Scan(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    url = Column(Text, nullable=False)
+    # Raw URLs are never retained in scan history.
+    url_hash = Column(String(64), nullable=False, index=True)
+    url_redacted = Column(String(255), nullable=False)
     domain = Column(String(255))
     final_verdict = Column(String(50))        # was: verdict
     threat_score = Column(Float)
@@ -62,6 +64,7 @@ class Scan(Base):
     vt_suspicious = Column(Integer)           # was: virustotal_suspicious
     vt_harmless = Column(Integer)             # new
     created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
     
     # Removed: ml_confidence, has_ssl, has_forms, suspicious_keywords, scan_type, ip_address, user_agent
     
@@ -71,7 +74,7 @@ class Scan(Base):
         return {
             'id': self.id,
             'user_id': self.user_id,
-            'url': self.url,
+            'url': self.url_redacted,
             'domain': self.domain,
             'final_verdict': self.final_verdict,
             'threat_score': self.threat_score,

@@ -1,5 +1,6 @@
 from models import Session, User, Scan, Feedback
 from datetime import datetime, timedelta
+import hashlib
 from sqlalchemy import func, desc
 import csv
 import os
@@ -59,9 +60,11 @@ def save_scan(scan_data):
     """Save a scan to database"""
     session = Session()
     try:
+        raw_url = scan_data.get('url', '')
         scan = Scan(
             user_id=scan_data.get('user_id'),
-            url=scan_data.get('url'),
+            url_hash=hashlib.sha256(raw_url.encode('utf-8')).hexdigest(),
+            url_redacted=f"{scan_data.get('domain', 'unknown')}/…",
             domain=scan_data.get('domain'),
             final_verdict=scan_data.get('verdict'),
             threat_score=float(scan_data.get('threat_score') or 0),
@@ -78,6 +81,24 @@ def save_scan(scan_data):
         raise e
     finally:
         session.close()
+
+def get_owned_scans(user_id, limit=25):
+    session = Session()
+    try:
+        scans = session.query(Scan).filter(Scan.user_id == user_id).order_by(desc(Scan.created_at)).limit(limit).all()
+        return {"scans": [scan.to_dict() for scan in scans]}
+    finally: session.close()
+
+def export_owned_scans(user_id):
+    return get_owned_scans(user_id, 1000)["scans"]
+
+def delete_owned_scan(user_id, scan_id):
+    session = Session()
+    try:
+        scan = session.query(Scan).filter(Scan.id == scan_id, Scan.user_id == user_id).first()
+        if not scan: return False
+        session.delete(scan); session.commit(); return True
+    finally: session.close()
 
 
 def get_all_scans(limit=100, offset=0, user_id=None, filter_verdict=None):
