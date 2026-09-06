@@ -1,6 +1,7 @@
 # web
 Flask==3.0.0
 flask-cors==4.0.0
+Flask-Limiter==3.5.0
 # ml
 scikit-learn==1.8.0
 pandas==2.1.4

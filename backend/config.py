@@ -41,3 +41,5 @@ class Config:
     JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
     JWT_ACCESS_TOKEN_EXPIRES = 24 * 60 * 60  # 24 hours
     SECRET_KEY = os.environ["SECRET_KEY"]
+    MAX_REQUEST_BYTES = int(os.getenv("MAX_REQUEST_BYTES", "32768"))
+    API_RATE_LIMIT_PER_MINUTE = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "30"))

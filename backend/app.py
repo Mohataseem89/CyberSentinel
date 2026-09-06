@@ -1,6 +1,5 @@
-from flask import Flask, request, jsonify, Response
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_identity, get_jwt
+from flask import request, jsonify, Response
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
 import os
 import csv
 import io
@@ -15,6 +14,9 @@ from routes.auth import auth_bp
 from services.qr_service import QRCodeScanner
 from schemas.scan import ScanRequest
 from services.url_normalizer import URLValidationError
+from app_factory import create_app
+from middleware import FixedWindowLimiter
+from routes.history import history_bp
 
 # Load environment variables
 load_dotenv()
@@ -24,7 +26,8 @@ load_dotenv()
 
 
 # Initialize Flask app
-app = Flask(__name__)
+app = create_app()
+jwt = app.jwt
 # app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
@@ -34,24 +37,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 print(">>> LOADED UPDATED app.py <<<")
 print(">>> FILE PATH:", __file__)
 
-CORS(app)
-
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-# Load config
-from config import Config
-app.config.from_object(Config)
-
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-
-CORS(
-    app,
-    resources={r"/*": {"origins": [frontend_url]}},
-    supports_credentials=True
-)
-
-# Initialize JWT
-jwt = JWTManager(app)
+FixedWindowLimiter(app)
 
 @jwt.unauthorized_loader
 def unauthorized_callback(reason):
@@ -82,7 +68,9 @@ def fresh_token_callback(jwt_header, jwt_payload):
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 # app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
-app.register_blueprint(analytics_bp)
+# Legacy analytics queries were global and could leak other users' data.
+# They remain disabled until rewritten as owner-scoped aggregates.
+app.register_blueprint(history_bp, url_prefix='/api')
 
 # Import services
 from services.url_analyzer import HybridURLAnalyzer
@@ -130,7 +118,8 @@ def analyze():
         analyzer = HybridURLAnalyzer()
         result = analyzer.analyze(url)
 
-        try:
+        if user_id and request.headers.get("X-Retain-Scan", "").lower() == "true":
+          try:
             domain = scan_request.url.hostname
 
             breakdown = result.get("breakdown", {})
@@ -157,10 +146,9 @@ def analyze():
             }
 
             save_scan(scan_data)
-            print("Scan saved to database")
 
-        except Exception as e:
-            print(f"Failed to save scan: {e}")
+          except Exception:
+            app.logger.exception("Could not retain opt-in scan")
 
         return jsonify(result), 200
 
