@@ -9,12 +9,12 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from database import save_scan, save_feedback, update_feedback_status, get_all_feedback, append_approved_feedback_to_csv
 from analytics import analytics_bp
-import subprocess
-import sys
 from services.ml_predictor import predictor
 from flask_jwt_extended.exceptions import JWTExtendedException
 from routes.auth import auth_bp
 from services.qr_service import QRCodeScanner
+from schemas.scan import ScanRequest
+from services.url_normalizer import URLValidationError
 
 # Load environment variables
 load_dotenv()
@@ -105,25 +105,20 @@ def home():
     return jsonify({
         "message": "CyberSentinel Backend Running",
         "version": "2.0.0",
-        "features": ["URL Analysis", "Email Scanning", "QR Code", "Document Scan", "Authentication", "Analytics"]
+        "features": ["URL Analysis", "QR Code", "Authentication", "Analytics"]
     })
 
 @app.route('/health')
 def health():
-    return jsonify({"status": "healthy", "analyzer": "Hybrid ML + VirusTotal + Content"})
+    return jsonify({"status": "healthy", "analyzer": "URL-safe ML + reputation checks", "remote_content_fetching": "disabled"})
 
 # URL ANALYSIS
 @app.route("/analyze", methods=["POST"])
 def analyze():
     """Analyze URL for phishing"""
     try:
-        data = request.get_json()
-        url = data.get("url", "").strip()
-
-        if not url:
-            return jsonify({"error": "URL is required"}), 400
-
-        print(f"[+] Analyzing URL: {url}")
+        scan_request = ScanRequest.from_json(request.get_json(silent=True))
+        url = scan_request.url.url
 
         user_id = None
         try:
@@ -136,7 +131,7 @@ def analyze():
         result = analyzer.analyze(url)
 
         try:
-            domain = urlparse(url).netloc or url
+            domain = scan_request.url.hostname
 
             breakdown = result.get("breakdown", {})
             ml_data = breakdown.get("ml", {}) or {}
@@ -169,6 +164,8 @@ def analyze():
 
         return jsonify(result), 200
 
+    except URLValidationError as error:
+        return jsonify({"error": error.message, "code": error.code}), 400
     except Exception as e:
         print(f"Analysis error: {e}")
         import traceback
@@ -399,85 +396,10 @@ def retrain_model():
     admin_check = admin_required()
     if admin_check:
         return admin_check
-    """
-    Safely run:
-    1. prepare_training_data.py
-    2. train_model.py
-    """
-    try:
-        backend_dir = os.path.dirname(os.path.abspath(__file__))
-        ml_dir = os.path.join(backend_dir, "ml")
-
-        prepare_script = os.path.join(ml_dir, "prepare_training_data.py")
-        train_script = os.path.join(ml_dir, "train_model.py")
-
-        if not os.path.exists(prepare_script):
-            return jsonify({"error": f"prepare_training_data.py not found at {prepare_script}"}), 500
-
-        if not os.path.exists(train_script):
-            return jsonify({"error": f"train_model.py not found at {train_script}"}), 500
-
-        print("\n[ADMIN] Starting model retraining...")
-        print(f"[ADMIN] ML directory: {ml_dir}")
-
-        # Step 1: prepare dataset
-        prepare_result = subprocess.run(
-            [sys.executable, prepare_script],
-            cwd=ml_dir,
-            capture_output=True,
-            text=True
-        )
-
-        if prepare_result.returncode != 0:
-            print("[ADMIN] Dataset preparation failed")
-            print(prepare_result.stderr)
-            return jsonify({
-                "success": False,
-                "step": "prepare_training_data",
-                "error": prepare_result.stderr or "Dataset preparation failed",
-                "stdout": prepare_result.stdout
-            }), 500
-
-        # Step 2: train model
-        train_result = subprocess.run(
-            [sys.executable, train_script],
-            cwd=ml_dir,
-            capture_output=True,
-            text=True
-        )
-
-        if train_result.returncode != 0:
-            print("[ADMIN] Model training failed")
-            print(train_result.stderr)
-            return jsonify({
-                "success": False,
-                "step": "train_model",
-                "error": train_result.stderr or "Model training failed",
-                "stdout": train_result.stdout
-            }), 500
-
-        print("[ADMIN] Model retraining completed successfully")
-
-        # NEW: reload model in memory
-        reload_success = predictor.reload_model()
-
-        return jsonify({
-            "success": True,
-            "message": "Model retrained successfully",
-            "model_reloaded": reload_success,
-            "prepare_output": prepare_result.stdout,
-            "train_output": train_result.stdout
-        }), 200
-
-
-    except Exception as e:
-        print(f"[ADMIN] Retrain error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    return jsonify({
+        "error": "Runtime retraining is disabled. Train and evaluate a versioned model offline before promotion.",
+        "code": "runtime_retraining_disabled",
+    }), 409
     
 
 @app.route("/api/admin/reload-model", methods=["POST"])
@@ -566,7 +488,7 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print(" CyberSentinel Backend - Hybrid ML Analysis System")
     print("="*60)
-    print(" ML Model + VirusTotal + Content Analysis")
+    print(" URL-safe ML + optional VirusTotal reputation checks")
     print(" User Authentication Enabled")
     print(" Database Integration Active")
     print(" Running on http://localhost:5000")

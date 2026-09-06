@@ -5,8 +5,7 @@ import {
   getFeedbackStats,
   approveFeedback,
   rejectFeedback,
-  exportApprovedFeedback,
-  retrainModel
+  exportApprovedFeedback
 } from "../../services/api";
 
 export default function AdminFeedback() {
@@ -19,7 +18,6 @@ export default function AdminFeedback() {
   });
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [retraining, setRetraining] = useState(false);
 
   const loadFeedback = async () => {
     try {
@@ -72,24 +70,6 @@ export default function AdminFeedback() {
     }
   };
 
-  const handleRetrain = async () => {
-    try {
-      setRetraining(true);
-      toast.loading("Retraining model...", { id: "retrain" });
-
-      const result = await retrainModel();
-
-      console.log("Retrain result:", result);
-
-      toast.success("Model retrained successfully", { id: "retrain" });
-    } catch (error) {
-      console.error("Retrain failed:", error);
-      toast.error(error.message || "Failed to retrain model", { id: "retrain" });
-    } finally {
-      setRetraining(false);
-    }
-  };
-
   if (loading) {
     return <div className="p-8">Loading feedback...</div>;
   }
@@ -111,18 +91,6 @@ export default function AdminFeedback() {
               className="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700"
             >
               Refresh
-            </button>
-
-            <button
-              onClick={handleRetrain}
-              disabled={retraining}
-              className={`px-5 py-3 rounded-lg text-white ${
-                retraining
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-purple-600 hover:bg-purple-700"
-              }`}
-            >
-              {retraining ? "Retraining..." : "Retrain Model"}
             </button>
 
             <button

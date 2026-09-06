@@ -1,119 +1,81 @@
-import re
-from urllib.parse import urlparse
-import tld
-import socket
+"""Versioned, deterministic lexical features for URL classification."""
+
+from __future__ import annotations
+
+from collections import Counter
+import ipaddress
+import math
+from urllib.parse import urlsplit
+
+FEATURE_SCHEMA_VERSION = 1
+FEATURE_NAMES = (
+    "url_length", "domain_length", "path_length", "num_dots", "num_hyphens",
+    "num_underscores", "num_slashes", "num_question", "num_equals", "num_at",
+    "num_ampersand", "num_digits", "has_ip", "is_https", "num_subdomains",
+    "has_suspicious_words", "has_double_slash", "is_shortened", "entropy",
+    "digit_ratio", "has_port",
+)
+SUSPICIOUS_KEYWORDS = frozenset({"login", "verify", "account", "secure", "update", "confirm", "banking", "paypal", "ebay", "signin"})
+SHORTENER_HOSTS = frozenset({"bit.ly", "tinyurl.com", "goo.gl", "t.co", "ow.ly"})
+
 
 class URLFeatureExtractor:
-    """Extract features from URLs for ML model"""
-    
-    @staticmethod
-    def extract_features(url):
-        """
-        Extract 20+ features from a URL
-        Returns: dictionary of features
-        """
-        features = {}
-        
+    """Extract exactly ``FEATURE_NAMES`` for every supplied URL-like string."""
+
+    feature_names = FEATURE_NAMES
+    schema_version = FEATURE_SCHEMA_VERSION
+
+    @classmethod
+    def extract_features(cls, url: object) -> dict[str, float | int]:
+        value = "" if url is None else str(url).strip()
+        parsed = cls._parse(value)
+        hostname = (parsed.hostname or "").lower().rstrip(".")
+        path = parsed.path or "/"
         try:
-            # Validate URL is a string
-            if not isinstance(url, str):
-                url = str(url) if url is not None else ""
-            
-            # Skip empty or invalid URLs
-            if not url or url == 'nan' or len(url) < 5:
-                # Return default features
-                return {f'feature_{i}': 0 for i in range(21)}
-            
-            parsed = urlparse(url)
-            domain = parsed.netloc
-            path = parsed.path
-            
-            # 1 URL Length
-            features['url_length'] = len(url)
-            
-            # 2 Domain Length
-            features['domain_length'] = len(domain)
-            
-            # 3 Path Length
-            features['path_length'] = len(path)
-            
-            # 4 number of dots
-            features['num_dots'] = url.count('.')
-            
-            # 5 number of hyphens
-            features['num_hyphens'] = url.count('-')
-            
-            # 6 number of underscores
-            features['num_underscores'] = url.count('_')
-            
-            # 7 number of slashes
-            features['num_slashes'] = url.count('/')
-            
-            # 8 number of question marks
-            features['num_question'] = url.count('?')
-            
-            # 9 number of equals
-            features['num_equals'] = url.count('=')
-            
-            # 10 number of @ symbols
-            features['num_at'] = url.count('@')
-            
-            # 11 number of ampersands
-            features['num_ampersand'] = url.count('&')
-            
-            # 12 number of digits
-            features['num_digits'] = sum(c.isdigit() for c in url)
-            
-            # 13 has IP address (instead of domain name)
-            features['has_ip'] = 1 if re.search(r'\d+\.\d+\.\d+\.\d+', domain) else 0
-            
-            # 14 uses HTTPS
-            features['is_https'] = 1 if parsed.scheme == 'https' else 0
-            
-            # 15 number of subdomains
-            features['num_subdomains'] = len(domain.split('.')) - 2 if domain else 0
-            
-            # 16 has suspicious keywords
-            suspicious_keywords = ['login', 'verify', 'account', 'secure', 'update', 
-                                   'confirm', 'banking', 'paypal', 'ebay', 'signin']
-            features['has_suspicious_words'] = 1 if any(kw in url.lower() for kw in suspicious_keywords) else 0
-            
-            # 17 has double slashes in path
-            features['has_double_slash'] = 1 if '//' in path else 0
-            
-            # 18 uses URL shortener
-            shorteners = ['bit.ly', 'tinyurl', 'goo.gl', 't.co', 'ow.ly']
-            features['is_shortened'] = 1 if any(short in domain for short in shorteners) else 0
-            
-            # 19 entropy of URL (randomness)
-            features['entropy'] = URLFeatureExtractor._calculate_entropy(url)
-            
-            # 20 ratio of digits to total length
-            features['digit_ratio'] = features['num_digits'] / max(len(url), 1)
-            
-            # 21 has port number
-            features['has_port'] = 1 if parsed.port else 0
-            
-        except Exception as e:
-            print(f"Error extracting features: {e}")
-            # Return default features if error
-            features = {f'feature_{i}': 0 for i in range(21)}
-        
+            port = parsed.port
+        except ValueError:
+            port = None
+
+        digit_count = sum(character.isdigit() for character in value)
+        features: dict[str, float | int] = {
+            "url_length": len(value), "domain_length": len(hostname), "path_length": len(path),
+            "num_dots": value.count("."), "num_hyphens": value.count("-"),
+            "num_underscores": value.count("_"), "num_slashes": value.count("/"),
+            "num_question": value.count("?"), "num_equals": value.count("="),
+            "num_at": value.count("@"), "num_ampersand": value.count("&"),
+            "num_digits": digit_count, "has_ip": int(cls._is_ip_literal(hostname)),
+            "is_https": int(parsed.scheme.lower() == "https"),
+            "num_subdomains": max(0, len(hostname.split(".")) - 2) if hostname else 0,
+            "has_suspicious_words": int(any(keyword in value.lower() for keyword in SUSPICIOUS_KEYWORDS)),
+            "has_double_slash": int("//" in path), "is_shortened": int(hostname in SHORTENER_HOSTS),
+            "entropy": cls._calculate_entropy(value), "digit_ratio": digit_count / max(len(value), 1),
+            "has_port": int(port is not None),
+        }
+        if tuple(features) != FEATURE_NAMES:
+            raise RuntimeError("Feature schema does not match FEATURE_NAMES.")
         return features
-    
+
     @staticmethod
-    def _calculate_entropy(string):
-        """Calculate Shannon entropy of a string"""
-        import math
-        from collections import Counter
-        
-        if not string:
-            return 0
-        
-        counts = Counter(string)
-        length = len(string)
-        
-        entropy = -sum((count/length) * math.log2(count/length) 
-                      for count in counts.values())
-        
-        return entropy
+    def _parse(value: str):
+        try:
+            return urlsplit(value if "://" in value else f"https://{value}")
+        except ValueError:
+            # Historic datasets contain malformed URL strings. Preserve the
+            # lexical features while keeping hostname/path-derived values safe.
+            return urlsplit("https://")
+
+    @staticmethod
+    def _is_ip_literal(hostname: str) -> bool:
+        try:
+            ipaddress.ip_address(hostname)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def _calculate_entropy(value: str) -> float:
+        if not value:
+            return 0.0
+        counts = Counter(value)
+        length = len(value)
+        return -sum((count / length) * math.log2(count / length) for count in counts.values())

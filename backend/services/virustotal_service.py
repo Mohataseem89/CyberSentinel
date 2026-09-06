@@ -4,20 +4,19 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY', '578cce9028f4b8d628f643b14bd4c0f6ccc75ec06fe6ac006b723a8ebc8d75f6')
-
 def check_url_reputation(url):
     """
     Check URL reputation using VirusTotal API
     Returns: dict with reputation score and details
     """
-    # if not VIRUSTOTAL_API_KEY or VIRUSTOTAL_API_KEY == '578cce9028f4b8d628f643b14bd4c0f6ccc75ec06fe6ac006b723a8ebc8d75f6':
+    VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
     if not VIRUSTOTAL_API_KEY:
         logger.warning("VirusTotal API key not configured")
         return {
-            "score": 50,  # Neutral score
+            "score": None,
             "positives": 0,
             "total": 0,
+            "available": False,
             "message": "VirusTotal not configured"
         }
     
@@ -63,6 +62,7 @@ def check_url_reputation(url):
                 "malicious": malicious,
                 "suspicious": suspicious,
                 "harmless": harmless,
+                "available": True,
                 "message": f"{positives}/{total} vendors flagged this URL"
             }
         
@@ -70,17 +70,19 @@ def check_url_reputation(url):
             # URL not in database, submit for scanning
             logger.info("URL not in VirusTotal database")
             return {
-                "score": 50,
+                "score": None,
                 "positives": 0,
                 "total": 0,
+                "available": True,
                 "message": "URL not previously scanned"
             }
     
     except Exception as e:
         logger.error(f"VirusTotal error: {str(e)}")
         return {
-            "score": 50,
+            "score": None,
             "positives": 0,
             "total": 0,
+            "available": False,
             "message": "VirusTotal check failed"
         }

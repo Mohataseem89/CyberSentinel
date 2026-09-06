@@ -1,126 +1,83 @@
-import joblib
-import os
+"""Validated model loading and explicit class-to-risk mapping."""
+
+from __future__ import annotations
+
+import json
 import logging
-from ml.feature_extractor import URLFeatureExtractor
-# from .feature_extractor import URLFeatureExtractor
+from pathlib import Path
+
+import joblib
+import pandas as pd
+import sklearn
+
+from ml.feature_extractor import FEATURE_NAMES, FEATURE_SCHEMA_VERSION, URLFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
+
 class MLPredictor:
-    """Machine Learning based URL prediction"""
-    def reload_model(self):
-        """Reload model from disk after retraining"""
-        try:
-            print("[ML] Reloading model from disk...")
-            self.load_model()
-            print("[ML] Model reloaded successfully")
-            return True
-        except Exception as e:
-            print("[ML] Reload failed:", e)
-            self.model = None
-            self.feature_columns = None
-            return False
-    
-    def __init__(self):
+    """Load only a model artifact compatible with the current feature schema."""
+
+    def __init__(self, data_dir: str | Path | None = None):
+        self.data_dir = Path(data_dir) if data_dir else Path(__file__).resolve().parents[1] / "data"
         self.model = None
-        self.feature_columns = None
+        self.manifest = None
+        self.unavailable_reason = "Model has not been loaded."
         self.load_model()
-    
-    def load_model(self):
+
+    def load_model(self) -> bool:
+        model_path = self.data_dir / "phishing_model.pkl"
+        manifest_path = self.data_dir / "model_manifest.json"
         try:
-            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            DATA_DIR = os.path.join(BASE_DIR, "data")
+            if not model_path.exists() or not manifest_path.exists():
+                raise FileNotFoundError("A compatible model and model_manifest.json are required.")
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if manifest.get("feature_schema_version") != FEATURE_SCHEMA_VERSION:
+                raise ValueError("Model feature schema version does not match the application.")
+            if tuple(manifest.get("feature_names", ())) != FEATURE_NAMES:
+                raise ValueError("Model feature names do not match the application.")
+            if manifest.get("class_labels") != ["legitimate", "phishing"]:
+                raise ValueError("Model manifest class labels are invalid.")
+            if manifest.get("scikit_learn_version") != sklearn.__version__:
+                raise ValueError("Model scikit-learn version does not match the runtime.")
+            model = joblib.load(model_path)
+            if getattr(model, "n_features_in_", None) != len(FEATURE_NAMES):
+                raise ValueError("Model feature count does not match the feature schema.")
+            if list(getattr(model, "classes_", ())) != ["legitimate", "phishing"]:
+                raise ValueError("Model classes do not match the manifest.")
+            self.model, self.manifest, self.unavailable_reason = model, manifest, ""
+            logger.info("Validated ML model loaded: %s", manifest.get("model_version", "unknown"))
+            return True
+        except Exception as error:
+            self.model, self.manifest, self.unavailable_reason = None, None, str(error)
+            logger.warning("ML model unavailable: %s", self.unavailable_reason)
+            return False
 
-            MODEL_PATH = os.path.join(DATA_DIR, "phishing_model.pkl")
-            FEATURE_COLUMNS_PATH = os.path.join(DATA_DIR, "feature_columns.pkl")
+    def reload_model(self) -> bool:
+        return self.load_model()
 
-            print(f"Looking for model at: {MODEL_PATH}")
-            print(f"Looking for feature columns at: {FEATURE_COLUMNS_PATH}")
-
-            self.model = joblib.load(MODEL_PATH)
-            self.feature_columns = joblib.load(FEATURE_COLUMNS_PATH)
-
-            print("ML model loaded successfully")
-
-        except Exception as e:
-            print("ML model not found. Train the model first.")
-            print("Error:", e)
-            self.model = None
-            self.feature_columns = None
-
-
-
-
-            
-
-    
-    def predict(self, url):
-        """
-        Predict if URL is phishing using ML model
-        Returns: dict with prediction and confidence
-        """
-        if not self.model:
-            logger.warning("ML model not available")
-            return {
-                "score": 50,
-                "prediction": "unknown",
-                "confidence": 0.0,
-                "message": "ML model not trained yet"
-            }
-        
+    def predict(self, url: str) -> dict:
+        if self.model is None:
+            return {"score": None, "prediction": "unknown", "confidence": 0.0, "available": False,
+                    "message": "ML analysis is unavailable until a compatible model is trained."}
         try:
-            # Extract features
-            extractor = URLFeatureExtractor()
-            features = extractor.extract_features(url)
-            
-            # Convert to DataFrame with correct column order
-            import pandas as pd
-            features_df = pd.DataFrame([features])
-            
-            # Ensure all required features are present
-            for col in self.feature_columns:
-                if col not in features_df.columns:
-                    features_df[col] = 0
-            
-            # Select only the columns used during training
-            features_df = features_df[self.feature_columns]
-            
-            # Predict
-            prediction = self.model.predict(features_df)[0]
-            probabilities = self.model.predict_proba(features_df)[0]
-            
-            # Get confidence score
-            confidence = max(probabilities)
-            
-            # calculate threat score (0-100, higher = more dangerous)
-            if prediction == 1:  # Phishing
-                threat_score = confidence * 100
-            else:  # Legitimate
-                threat_score = (1 - confidence) * 100
-            
-            result = {
-                "score": threat_score,
-                "prediction": "phishing" if prediction == 1 else "legitimate",
-                "confidence": confidence,
-                "probabilities": {
-                    "legitimate": probabilities[0],
-                    "phishing": probabilities[1]
-                },
-                "message": f"ML prediction: {threat_score:.1f}% threat level"
-            }
-            
-            logger.info(f"ML prediction for {url}: {result['prediction']} ({confidence:.2%})")
-            
-            return result
-            
-        except Exception as e:
-            logger.error(f"ML prediction error: {str(e)}")
+            features = URLFeatureExtractor.extract_features(url)
+            frame = pd.DataFrame([[features[name] for name in FEATURE_NAMES]], columns=FEATURE_NAMES)
+            probabilities = dict(zip(self.model.classes_, self.model.predict_proba(frame)[0], strict=True))
+            phishing_probability = float(probabilities["phishing"])
+            legitimate_probability = float(probabilities["legitimate"])
+            prediction = "phishing" if phishing_probability >= 0.5 else "legitimate"
+            confidence = phishing_probability if prediction == "phishing" else legitimate_probability
             return {
-                "score": 50,
-                "prediction": "error",
-                "confidence": 0.0,
-                "message": f"Prediction failed: {str(e)}"
+                "score": round(phishing_probability * 100, 2), "prediction": prediction,
+                "confidence": round(confidence, 6), "available": True,
+                "probabilities": {"legitimate": round(legitimate_probability, 6), "phishing": round(phishing_probability, 6)},
+                "message": "ML probability is one risk signal, not a safety guarantee.",
             }
+        except Exception:
+            logger.exception("ML prediction failed")
+            return {"score": None, "prediction": "unknown", "confidence": 0.0, "available": False,
+                    "message": "ML analysis could not be completed."}
 
-# global predictor instance
+
 predictor = MLPredictor()

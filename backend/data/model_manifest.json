@@ -1,0 +1,44 @@
+{
+  "class_labels": [
+    "legitimate",
+    "phishing"
+  ],
+  "dataset_rows": 411201,
+  "dataset_sha256": "8399b37755fdbf6b44a660d3a790a17d99b9791107b7e6a156ab43e53e16f3c6",
+  "feature_names": [
+    "url_length",
+    "domain_length",
+    "path_length",
+    "num_dots",
+    "num_hyphens",
+    "num_underscores",
+    "num_slashes",
+    "num_question",
+    "num_equals",
+    "num_at",
+    "num_ampersand",
+    "num_digits",
+    "has_ip",
+    "is_https",
+    "num_subdomains",
+    "has_suspicious_words",
+    "has_double_slash",
+    "is_shortened",
+    "entropy",
+    "digit_ratio",
+    "has_port"
+  ],
+  "feature_schema_version": 1,
+  "model_version": "url-rf-v1-8399b37755fd",
+  "random_state": 42,
+  "scikit_learn_version": "1.8.0",
+  "source_label_mapping": {
+    "bad": "phishing",
+    "good": "legitimate"
+  },
+  "trained_at_utc": "2026-09-06T09:30:50.901073+00:00",
+  "training_parameters": {
+    "max_depth": 20,
+    "n_estimators": 100
+  }
+}

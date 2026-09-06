@@ -62,12 +62,14 @@ export default function URLAnalyzer() {
   const getVerdictColor = (verdict) => {
     switch (verdict) {
       case 'Benign':
+      case 'Safe':
         return 'text-green-600 bg-green-50 border-green-200';
       case 'Potentially Risky':
         return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       case 'Suspicious':
         return 'text-orange-600 bg-orange-50 border-orange-200';
       case 'Phishing':
+      case 'Dangerous':
         return 'text-red-600 bg-red-50 border-red-200';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
@@ -77,12 +79,14 @@ export default function URLAnalyzer() {
   const getVerdictIcon = (verdict) => {
     switch (verdict) {
       case 'Benign':
+      case 'Safe':
         return <CheckCircle className="w-8 h-8 text-green-600" />;
       case 'Potentially Risky':
         return <AlertTriangle className="w-8 h-8 text-yellow-600" />;
       case 'Suspicious':
         return <AlertTriangle className="w-8 h-8 text-orange-600" />;
       case 'Phishing':
+      case 'Dangerous':
         return <XCircle className="w-8 h-8 text-red-600" />;
       default:
         return <Shield className="w-8 h-8 text-gray-600" />;
@@ -90,6 +94,7 @@ export default function URLAnalyzer() {
   };
 
   const getThreatLevel = (score) => {
+    if (typeof score !== 'number') return { label: 'Unavailable', color: 'bg-gray-400' };
     if (score >= 70) return { label: 'Critical', color: 'bg-red-500' };
     if (score >= 50) return { label: 'High', color: 'bg-orange-500' };
     if (score >= 30) return { label: 'Medium', color: 'bg-yellow-500' };
@@ -107,7 +112,7 @@ export default function URLAnalyzer() {
             <h1 className="text-4xl font-bold text-gray-900">URL Security Analyzer</h1>
           </div>
           <p className="text-gray-600 text-lg">
-            Hybrid ML-powered phishing detection using Machine Learning, VirusTotal, and Content Analysis
+            URL risk checks using machine learning and reputation data. Submitted pages are not opened by our server.
           </p>
         </div>
 
@@ -211,17 +216,17 @@ export default function URLAnalyzer() {
                 <div className="flex-1">
                   <h2 className="text-3xl font-bold mb-2">{result.final_verdict}</h2>
                   <p className="text-lg mb-4">
-                    Threat Score: <strong>{result.threat_score}%</strong> 
-                    <span className="ml-2 text-sm">
-                      ({getThreatLevel(result.threat_score).label} Risk)
-                    </span>
+                    {typeof result.threat_score === 'number' ? <>
+                      Threat Score: <strong>{result.threat_score}%</strong>
+                      <span className="ml-2 text-sm">({getThreatLevel(result.threat_score).label} Risk)</span>
+                    </> : 'Threat score unavailable'}
                   </p>
                   
                   {/* Threat Score Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
                     <div
                       className={`h-4 rounded-full ${getThreatLevel(result.threat_score).color}`}
-                      style={{ width: `${result.threat_score}%` }}
+                      style={{ width: `${typeof result.threat_score === 'number' ? result.threat_score : 0}%` }}
                     ></div>
                   </div>
 
@@ -267,7 +272,9 @@ export default function URLAnalyzer() {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Threat Score:</span>
                       <span className="font-semibold text-orange-600">
-                        {result.breakdown.ml.score.toFixed(1)}%
+                        {typeof result.breakdown.ml.score === 'number'
+                          ? `${result.breakdown.ml.score.toFixed(1)}%`
+                          : 'Unavailable'}
                       </span>
                     </div>
                     
@@ -345,7 +352,9 @@ export default function URLAnalyzer() {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Threat Score:</span>
                       <span className="font-semibold text-orange-600">
-                        {result.breakdown.virustotal.score.toFixed(1)}%
+                        {typeof result.breakdown.virustotal.score === 'number'
+                          ? `${result.breakdown.virustotal.score.toFixed(1)}%`
+                          : 'Unavailable'}
                       </span>
                     </div>
                     
@@ -358,13 +367,13 @@ export default function URLAnalyzer() {
                 )}
               </div>
 
-              {/* Content Analysis */}
+              {/* Remote content analysis is intentionally disabled. */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Activity className="w-6 h-6 text-green-600" />
-                  <h3 className="text-xl font-semibold">Content Analysis</h3>
+                  <h3 className="text-xl font-semibold">Remote Content Check</h3>
                   <span className="ml-auto text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                    40% weight
+                    Disabled
                   </span>
                 </div>
                 
@@ -380,7 +389,9 @@ export default function URLAnalyzer() {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Threat Score:</span>
                       <span className="font-semibold text-orange-600">
-                        {result.breakdown.content.score.toFixed(1)}%
+                        {typeof result.breakdown.content.score === 'number'
+                          ? `${result.breakdown.content.score.toFixed(1)}%`
+                          : 'Not performed'}
                       </span>
                     </div>
                     
@@ -482,7 +493,7 @@ export default function URLAnalyzer() {
                 </div>
                 <h4 className="font-semibold mb-2">Machine Learning</h4>
                 <p className="text-sm text-gray-600">
-                  Random Forest model trained on 50,000+ URLs with 20+ features
+                  Versioned Random Forest model trained on 411,201 URLs with 21 lexical features
                 </p>
               </div>
               
@@ -500,9 +511,9 @@ export default function URLAnalyzer() {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Activity className="w-8 h-8 text-green-600" />
                 </div>
-                <h4 className="font-semibold mb-2">Content Analysis</h4>
+                <h4 className="font-semibold mb-2">Remote Content</h4>
                 <p className="text-sm text-gray-600">
-                  Deep inspection of webpage content, forms, SSL, and suspicious patterns
+                  Disabled until it can run in an isolated, SSRF-safe worker
                 </p>
               </div>
             </div>

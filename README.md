@@ -4,10 +4,11 @@ CyberSentinel is a full-stack cybersecurity web application that detects malicio
 
 - Machine Learning (Random Forest)
 - VirusTotal API
-- Content Analysis
-- Community Feedback + Retraining
+- URL-only analysis (remote page-content fetching is disabled for SSRF protection)
+- Community feedback for offline, reviewed model improvement
 
-It also includes a Chrome Extension for real-time protection.
+It also includes a Chrome extension prototype. It must not be described as
+real-time protection until its detection and blocking behavior is independently validated.
 
 ---
 
@@ -41,10 +42,10 @@ It also includes a Chrome Extension for real-time protection.
 
 ## Features
 
-- Real-time URL phishing detection
-- Hybrid analysis using ML, API, and content analysis
+- URL risk detection using a versioned ML model and optional VirusTotal reputation
+- Remote page-content fetching disabled to protect the server from SSRF
 - Admin panel for feedback review
-- Model retraining system
+- Offline model training with manifest and evaluation report
 - Chrome extension integration
 - JWT-based authentication
 - QR code URL analysis
@@ -111,11 +112,20 @@ python ml/train_model.py
 
 #### Add Environment Variables
 
-Create a `.env` file inside the `backend` folder:
+Copy `backend/.env.example` to `backend/.env`, then set all required values.
+Never commit the real `.env` file or reuse placeholder secrets.
+If this repository was previously public, revoke and rotate every exposed API
+key, database password, and signing secret before running the application.
 
 ```env
-VIRUSTOTAL_API_KEY=your_api_key_here
-SECRET_KEY=your_secret_key
+SECRET_KEY=generate-a-long-random-secret
+JWT_SECRET_KEY=generate-a-different-long-random-secret
+DB_USER=cybersentinel
+DB_PASSWORD=your-local-database-password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=cybersentinel
+VIRUSTOTAL_API_KEY=optional-api-key
 ```
 
 Get a VirusTotal API key from: [VirusTotal](https://www.virustotal.com/gui/join-us)
@@ -154,10 +164,8 @@ Frontend will run on:
 
 ---
 
-## Default Admin Login
-
-- Username: `admin`
-- Password: `admin123`
+There is no default administrator account. Create administrator access through
+an audited bootstrap process before enabling administrative features.
 
 ---
 
@@ -165,25 +173,30 @@ Frontend will run on:
 
 1. User enters a URL or visits a website.
 2. Extension or frontend sends the URL to the backend.
-3. Backend performs:
-   - ML prediction
-   - VirusTotal check
-   - Content analysis
-4. Results are combined into a threat score.
-5. Final verdict is returned: **Benign**, **Suspicious**, or **Phishing**.
+3. Backend performs lexical ML analysis and, when configured, a VirusTotal lookup.
+   It does **not** open the submitted page or execute its content.
+4. Available signals are combined into a provisional risk score.
+5. Final verdict is returned: **Safe**, **Suspicious**, **Dangerous**, or **Unknown**.
+   A result is a risk indicator, not a guarantee of safety.
 
 ---
 
 ## Model Retraining
 
-- Users submit feedback.
-- Admin approves feedback.
-- Approved data is added to the dataset.
-- Model is retrained using:
+Model retraining is intentionally disabled from the running API. A new artifact
+must be trained and evaluated offline, producing all four files in
+`backend/data/`: `phishing_model.pkl`, `feature_columns.pkl`,
+`model_manifest.json`, and `model_evaluation.json`.
+
+From the `backend` directory, run:
 
 ```bash
-POST /api/admin/retrain-model
+python ml/train_model.py
 ```
+
+The running application accepts only a model whose manifest has the same
+feature schema and class labels as the current code. Do not promote a model
+until its generated evaluation report has been reviewed.
 
 ---
 

@@ -115,45 +115,13 @@ def init_db():
     Base.metadata.create_all(engine)
     print(" Database tables created successfully!")
 
-def create_sample_data():
-    """Create sample data for testing"""
-    session = Session()
-    
-    try:
-        admin = session.query(User).filter_by(username='admin').first()
-        if not admin:
-            admin = User(
-                username='admin',
-                email='admin@cybersentinel.com',
-                role='admin'
-            )
-            admin.set_password('admin123')
-            session.add(admin)
-            print("Admin user created (username: admin, password: admin123)")
-        else:
-            if admin.role != 'admin':
-                admin.role = 'admin'
-                print("Existing admin user updated with admin role")
-        
-        session.commit()
-        
-    except Exception as e:
-        print(f"Error creating sample data: {e}")
-        session.rollback()
-    finally:
-        session.close()
-
 if __name__ == "__main__":
     print("=" * 60)
     print(" CyberSentinel Database Setup")
     print("=" * 60)
     
     init_db()
-    create_sample_data()
     
     print("\n Database setup complete!")
-    print("\nYou can now:")
-    print("  1. Login with: admin / admin123")
-    print("  2. Start the Flask server")
-    print("  3. Test the API endpoints")
+    print("\nCreate the first administrator through a separate, audited bootstrap process.")
     print("=" * 60)

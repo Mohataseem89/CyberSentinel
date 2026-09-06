@@ -1,102 +1,55 @@
-import logging
+"""Bounded URL analysis that never fetches a submitted webpage."""
+
+from services.content_analyzer import ContentAnalyzer
 from services.ml_predictor import predictor
 from services.virustotal_service import check_url_reputation
-from services.content_analyzer import ContentAnalyzer
 
-logger = logging.getLogger(__name__)
 
 class HybridURLAnalyzer:
+    """Combine only available URL-safe signals.
+
+    Weights are provisional and normalized over available evidence. They will be
+    calibrated against held-out evaluation data in the risk-engine phase.
     """
-    Hybrid URL Analysis combining:
-    - ML Model (30% weight)
-    - VirusTotal Reputation (30% weight)
-    - Content Analysis (40% weight)
-    """
-    
-    WEIGHTS = {
-        "ml": 0.30,
-        "virustotal": 0.30,
-        "content": 0.40
-    }
-    
-    @staticmethod
-    def analyze(url):
-        """
-        Perform comprehensive URL analysis
-        Returns: dict with final verdict and detailed breakdown
-        """
-        logger.info(f" Analyzing URL: {url}")
-        
-        results = {
-            "url": url,
-            "final_verdict": "unknown",
-            "threat_score": 0,
-            "confidence": "low",
-            "breakdown": {},
-            "indicators": [],
-            "recommendations": []
-        }
-        
-        # 1. ML Model Analysis (30%)
-        logger.info(" Running ML analysis...")
+
+    WEIGHTS = {"ml": 0.60, "virustotal": 0.40}
+
+    @classmethod
+    def analyze(cls, url: str) -> dict:
         ml_result = predictor.predict(url)
-        results["breakdown"]["ml"] = ml_result
-        ml_score = ml_result["score"]
-        
-        # 2. VirusTotal Reputation (30%)
-        logger.info(" Checking VirusTotal reputation...")
         vt_result = check_url_reputation(url)
-        results["breakdown"]["virustotal"] = vt_result
-        vt_score = vt_result["score"]
-        
-        # 3. Content Analysis (40%)
-        logger.info(" Analyzing webpage content...")
         content_result = ContentAnalyzer.analyze_content(url)
-        results["breakdown"]["content"] = content_result
-        content_score = content_result["score"]
-        
-        # Calculate weighted threat score
-        threat_score = (
-            ml_score * HybridURLAnalyzer.WEIGHTS["ml"] +
-            vt_score * HybridURLAnalyzer.WEIGHTS["virustotal"] +
-            content_score * HybridURLAnalyzer.WEIGHTS["content"]
-        )
-        
-        results["threat_score"] = round(threat_score, 2)
-        
-        # Determine final verdict
-        if threat_score >= 70:
-            results["final_verdict"] = "Phishing"
-            results["confidence"] = "high"
-            results["recommendations"].append(" DO NOT enter any personal information")
-            results["recommendations"].append(" Block this URL immediately")
-            
-        elif threat_score >= 50:
-            results["final_verdict"] = "Suspicious"
-            results["confidence"] = "medium"
-            results["recommendations"].append(" Proceed with extreme caution")
-            results["recommendations"].append(" Verify the sender/source")
-            
-        elif threat_score >= 30:
-            results["final_verdict"] = "Potentially Risky"
-            results["confidence"] = "low"
-            results["recommendations"].append(" Be cautious")
-            results["recommendations"].append(" Verify URL authenticity")
-            
+        breakdown = {"ml": ml_result, "virustotal": vt_result, "content": content_result}
+        available = {
+            name: result for name, result in (("ml", ml_result), ("virustotal", vt_result))
+            if result.get("available") and isinstance(result.get("score"), (int, float))
+        }
+        if not available:
+            return {
+                "url": url, "final_verdict": "Unknown", "threat_score": None,
+                "confidence": "unavailable", "breakdown": breakdown, "indicators": [],
+                "recommendations": ["No reliable risk signal was available. Do not treat this as a safe result."],
+            }
+
+        weight_total = sum(cls.WEIGHTS[name] for name in available)
+        threat_score = round(sum(result["score"] * cls.WEIGHTS[name] for name, result in available.items()) / weight_total, 2)
+        if threat_score >= 75:
+            verdict, confidence = "Dangerous", "medium" if len(available) == 1 else "high"
+            recommendations = ["Do not enter credentials or payment information.", "Verify through an independent trusted channel."]
+        elif threat_score >= 40:
+            verdict, confidence = "Suspicious", "low" if len(available) == 1 else "medium"
+            recommendations = ["Proceed with caution and verify the destination independently."]
         else:
-            results["final_verdict"] = "Benign"
-            results["confidence"] = "high"
-            results["recommendations"].append(" URL appears safe")
-        
-        # Collect all indicators
-        results["indicators"].extend(content_result["indicators"])
-        
-        if ml_result["prediction"] == "phishing":
-            results["indicators"].append(f"ML Model: {ml_result['confidence']:.1%} confidence phishing")
-        
-        if vt_result["positives"] > 0:
-            results["indicators"].append(f"VirusTotal: {vt_result['positives']}/{vt_result['total']} vendors flagged")
-        
-        logger.info(f" Analysis complete: {results['final_verdict']} (Score: {threat_score:.1f})")
-        
-        return results
+            verdict, confidence = "Safe", "low" if len(available) == 1 else "medium"
+            recommendations = ["No current signal indicates elevated risk. This is not a guarantee of safety."]
+
+        indicators = []
+        if ml_result.get("available"):
+            indicators.append(f"ML: {ml_result['prediction']} ({ml_result['probabilities']['phishing']:.1%} phishing probability)")
+        if vt_result.get("available") and vt_result.get("positives", 0) > 0:
+            indicators.append(f"VirusTotal: {vt_result['positives']}/{vt_result['total']} vendors flagged the URL")
+        return {
+            "url": url, "final_verdict": verdict, "threat_score": threat_score,
+            "confidence": confidence, "breakdown": breakdown, "indicators": indicators,
+            "recommendations": recommendations,
+        }
