@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from services.url_normalizer import NormalizedURL, URLValidationError, normalize_url
 
@@ -31,3 +31,15 @@ class ScanRequest:
             raise URLValidationError("unexpected_fields", "Only the 'url' field is accepted.")
 
         return cls(url=normalize_url(payload.get("url")))
+
+
+@dataclass(frozen=True)
+class ScanResult:
+    """Public shape produced by the risk engine; scores can be unavailable."""
+
+    url: str
+    final_verdict: ScanVerdict
+    threat_score: float | None
+    confidence: str
+    evidence: Sequence[Mapping[str, Any]]
+    limitations: Sequence[str]

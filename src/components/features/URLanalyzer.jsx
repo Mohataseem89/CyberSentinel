@@ -247,7 +247,7 @@ export default function URLAnalyzer() {
                   <TrendingUp className="w-6 h-6 text-purple-600" />
                   <h3 className="text-xl font-semibold">ML Model</h3>
                   <span className="ml-auto text-sm bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
-                    30% weight
+                    Calibrated signal
                   </span>
                 </div>
                 
@@ -318,7 +318,7 @@ export default function URLAnalyzer() {
                   <Shield className="w-6 h-6 text-blue-600" />
                   <h3 className="text-xl font-semibold">VirusTotal</h3>
                   <span className="ml-auto text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                    30% weight
+                    Reputation evidence
                   </span>
                 </div>
                 
@@ -470,6 +470,15 @@ export default function URLAnalyzer() {
               )}
             </div>
 
+            {result.limitations && result.limitations.length > 0 && (
+              <div className="bg-gray-100 border border-gray-200 rounded-xl p-6">
+                <h3 className="text-lg font-semibold mb-2">Result limitations</h3>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  {result.limitations.map((limitation, idx) => <li key={idx}>• {limitation}</li>)}
+                </ul>
+              </div>
+            )}
+
             {/* Technical Details (Collapsible) */}
             {/* <details className="bg-white rounded-xl shadow-lg p-6">
               <summary className="text-xl font-semibold cursor-pointer hover:text-blue-600">
@@ -493,7 +502,7 @@ export default function URLAnalyzer() {
                 </div>
                 <h4 className="font-semibold mb-2">Machine Learning</h4>
                 <p className="text-sm text-gray-600">
-                  Versioned Random Forest model trained on 411,201 URLs with 21 lexical features
+                  Versioned, calibrated URL model with 21 local lexical features
                 </p>
               </div>
               
@@ -503,7 +512,7 @@ export default function URLAnalyzer() {
                 </div>
                 <h4 className="font-semibold mb-2">VirusTotal API</h4>
                 <p className="text-sm text-gray-600">
-                  Cross-reference with 70+ security vendors and antivirus engines
+                  Optional existing-report lookup; unavailable intelligence stays Unknown
                 </p>
               </div>
               

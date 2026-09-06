@@ -175,7 +175,9 @@ an audited bootstrap process before enabling administrative features.
 2. Extension or frontend sends the URL to the backend.
 3. Backend performs lexical ML analysis and, when configured, a VirusTotal lookup.
    It does **not** open the submitted page or execute its content.
-4. Available signals are combined into a provisional risk score.
+4. The calibrated ML signal and any existing VirusTotal report are combined with
+   evidence-aware weights. A low ML score by itself remains **Unknown** rather
+   than being presented as safe.
 5. Final verdict is returned: **Safe**, **Suspicious**, **Dangerous**, or **Unknown**.
    A result is a risk indicator, not a guarantee of safety.
 
@@ -184,19 +186,31 @@ an audited bootstrap process before enabling administrative features.
 ## Model Retraining
 
 Model retraining is intentionally disabled from the running API. A new artifact
-must be trained and evaluated offline, producing all four files in
-`backend/data/`: `phishing_model.pkl`, `feature_columns.pkl`,
-`model_manifest.json`, and `model_evaluation.json`.
-
-From the `backend` directory, run:
+must be trained and evaluated offline. First create the immutable,
+domain-grouped holdout for the dataset version:
 
 ```bash
-python ml/train_model.py
+python -m ml.prepare_governed_dataset
 ```
+
+Then train the artifact:
+
+```bash
+python -m ml.train_model
+```
+
+Training produces the runtime files in
+`backend/data/`: `phishing_model.pkl`, `feature_columns.pkl`,
+`probability_calibrator.pkl`, `model_manifest.json`, `model_evaluation.json`,
+and `MODEL_CARD.md`. The generated `backend/ml/data/dataset_registry.json` and
+`immutable_holdout.csv` are local governance artifacts and are intentionally
+not committed because they may contain licensed or sensitive URLs.
 
 The running application accepts only a model whose manifest has the same
 feature schema and class labels as the current code. Do not promote a model
-until its generated evaluation report has been reviewed.
+until its generated evaluation report, calibration results, slices, and model
+card have been reviewed. The current source does not include trustworthy
+collection timestamps, so the reports deliberately make no temporal-split claim.
 
 ---
 

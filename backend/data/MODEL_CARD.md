@@ -2,10 +2,10 @@
 
 ## Model
 
-- Version: `url-rf-v1-158b9501bf24`
+- Version: `url-rf-v1-1d07855c7a6a`
 - Type: lexical URL Random Forest with isotonic probability calibration
 - Features: 21 fixed, local lexical features; no URL is fetched
-- Dataset source SHA-256: `8399b37755fdbf6b44a660d3a790a17d99b9791107b7e6a156ab43e53e16f3c6`
+- Dataset source SHA-256: `567071f89972e444dc9fd239c2eceb112eed2128a2b33fbea41976d767a5b758`
 
 ## Evaluation protocol
 
@@ -15,12 +15,12 @@ removed. The source has no trustworthy timestamps, so no temporal claim is made.
 
 ## Immutable-holdout results
 
-- Precision (phishing): 0.78064
-- Recall (phishing): 0.610428
-- F1 (phishing): 0.685121
-- PR AUC: 0.792283
-- ROC AUC: 0.921723
-- Brier score: 0.075052
+- Precision (phishing): 0.780426
+- Recall (phishing): 0.608994
+- F1 (phishing): 0.684134
+- PR AUC: 0.790449
+- ROC AUC: 0.919146
+- Brier score: 0.079174
 
 ## Limitations
 

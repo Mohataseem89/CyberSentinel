@@ -18,19 +18,17 @@ class MLPipelineTests(unittest.TestCase):
         self.assertNotIn("feature_0", features)
 
     def test_trained_artifact_has_manifest_and_correct_probability_mapping(self):
-        rows = [
-            ("https://example.org", "good"), ("https://docs.example.org", "good"),
-            ("https://shop.example.org", "good"), ("https://news.example.org", "good"),
-            ("http://login-check-account.example", "bad"), ("http://verify-paypal-login.example", "bad"),
-            ("http://secure-update-account.example", "bad"), ("http://signin-confirm-bank.example", "bad"),
-        ]
+        rows = [(f"https://benign-{index}.test", "good") for index in range(30)]
+        rows += [(f"http://login-verify-{index}.test", "bad") for index in range(30)]
         with tempfile.TemporaryDirectory() as temporary_directory:
             base = Path(temporary_directory)
             dataset = base / "dataset.csv"
             pd.DataFrame(rows, columns=["url", "label"]).to_csv(dataset, index=False)
-            _, manifest, _ = train_phishing_model(dataset, base, n_estimators=10)
+            _, manifest, evaluation = train_phishing_model(dataset, base, n_estimators=10, governance_dir=base / "governance")
 
             self.assertEqual(manifest["class_labels"], ["legitimate", "phishing"])
+            self.assertIn("immutable_holdout", evaluation)
+            self.assertIn("pr_auc", evaluation["immutable_holdout"])
             self.assertEqual(json.loads((base / "model_manifest.json").read_text())["feature_names"], list(FEATURE_NAMES))
             result = MLPredictor(base).predict("http://login-verify-account.example")
 

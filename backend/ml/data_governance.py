@@ -71,6 +71,7 @@ def load_labeled_urls(dataset_path: str | Path) -> tuple[pd.DataFrame, dict]:
     if source["label"].nunique() != 2:
         raise ValueError("Training data must include both legitimate and phishing labels.")
 
+
     return source, {
         "source_sha256": sha256_file(dataset_path),
         "raw_rows": int(raw_rows),

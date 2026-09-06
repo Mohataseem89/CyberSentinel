@@ -169,6 +169,7 @@ def train_phishing_model(dataset_path: str | Path | None = None, output_dir: str
     return model, manifest, evaluation
 
 
+
 if __name__ == "__main__":
     _, manifest, evaluation = train_phishing_model()
     print(f"Trained {manifest['model_version']}")

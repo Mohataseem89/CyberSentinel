@@ -8,7 +8,7 @@
     "phishing"
   ],
   "dataset_rows": 411201,
-  "dataset_sha256": "8399b37755fdbf6b44a660d3a790a17d99b9791107b7e6a156ab43e53e16f3c6",
+  "dataset_sha256": "567071f89972e444dc9fd239c2eceb112eed2128a2b33fbea41976d767a5b758",
   "feature_names": [
     "url_length",
     "domain_length",
@@ -33,18 +33,18 @@
     "has_port"
   ],
   "feature_schema_version": 1,
-  "holdout_rows": 36038,
-  "holdout_sha256": "20d8317507650fc25dba8fd1540f92981e15255d42c06c7e5a796fa789a6d1ef",
-  "model_version": "url-rf-v1-158b9501bf24",
+  "holdout_rows": 33453,
+  "holdout_sha256": "4c1148f71dc7d8f8f466f2c0770ef2d0de9abded797f71d122fff1e9ff99af55",
+  "model_version": "url-rf-v1-1d07855c7a6a",
   "random_state": 42,
   "risk_signal_quality": {
-    "f1_phishing": 0.685121,
-    "precision_phishing": 0.78064,
-    "recall_phishing": 0.610428
+    "f1_phishing": 0.684134,
+    "precision_phishing": 0.780426,
+    "recall_phishing": 0.608994
   },
-  "scikit_learn_version": "1.8.0",
+  "scikit_learn_version": "1.7.2",
   "split_strategy": "deterministic_group_shuffle_by_registrable_domain",
-  "trained_at_utc": "2026-09-06T11:47:47.882804+00:00",
+  "trained_at_utc": "2026-09-06T17:50:55.478180+00:00",
   "training_parameters": {
     "class_weight": "balanced_subsample",
     "max_depth": 20,
