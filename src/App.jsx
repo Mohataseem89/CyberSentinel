@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navigation from './components/UI/Navigation';
-import URLAnalyzer from './components/features/URLAnalyzer';
+import { lazy, Suspense } from 'react';
+const ScannerPage = lazy(() => import('./pages/ScannerPage'));
 import FeedbackForm from './components/features/FeedbackForm';
 import './App.css';
 import QRScanner from './components/features/QRScanner';
@@ -41,9 +42,9 @@ function App() {
         <Navigation />
         
         <Routes>
-          <Route path="/" element={<URLAnalyzer />} />
+          <Route path="/" element={<Suspense fallback={<main className="p-8">Loading scanner…</main>}><ScannerPage /></Suspense>} />
           <Route path="/login" element={<Login />} />
-          <Route path="/analyze" element={<URLAnalyzer />} />
+          <Route path="/analyze" element={<Navigate to="/" replace />} />
           <Route path="/reporturl" element={<FeedbackForm />} />
           <Route path="/feedback" element={<Navigate to="/reporturl" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

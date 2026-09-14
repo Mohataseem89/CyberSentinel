@@ -198,8 +198,14 @@ def submit_feedback():
         if not url:
             return jsonify({"error": "URL is required"}), 400
 
-        if not category:
-            return jsonify({"error": "Category is required"}), 400
+        allowed_categories = {"false_negative", "false_positive", "new_threat", "improvement"}
+        allowed_labels = {"Benign", "Defacement", "Malware", "Phishing", "Safe", "Suspicious", "Dangerous", "Unknown"}
+        if category not in allowed_categories:
+            return jsonify({"error": "Choose a valid feedback category."}), 400
+        if actual_threat not in allowed_labels:
+            return jsonify({"error": "Choose a valid observed classification."}), 400
+        if len(description) > 1000:
+            return jsonify({"error": "Details must be 1000 characters or fewer."}), 400
 
         user_id = None
         try:
@@ -219,10 +225,8 @@ def submit_feedback():
 
         saved_feedback = save_feedback(feedback_data)
 
-        print(f"[+] Feedback saved as pending: {url}")
-
         return jsonify({
-            "message": "Feedback submitted successfully and marked as pending review",
+            "message": "Feedback submitted for human review. It does not automatically change the model.",
             "feedback": saved_feedback
         }), 201
 
@@ -263,15 +267,9 @@ def approve_feedback(feedback_id):
         if not updated_feedback:
             return jsonify({"error": "Feedback not found"}), 404
 
-        csv_result = append_approved_feedback_to_csv(updated_feedback)
-
-        print(f"[+] Feedback approved: {updated_feedback.get('url')}")
-        print(f"[+] Approved CSV status: {csv_result}")
-
         return jsonify({
-            "message": "Feedback approved successfully",
-            "feedback": updated_feedback,
-            "csv": csv_result
+            "message": "Feedback marked as reviewed. Offline dataset curation is required before any retraining.",
+            "feedback": updated_feedback
         }), 200
 
     except Exception as e:

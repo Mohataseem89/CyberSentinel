@@ -77,7 +77,7 @@ export default function FeedbackForm() {
         description: formData.description.trim()
       });
 
-      toast.success('🎉 Thank you! Your feedback helps improve our detection system');
+      toast.success('Thank you. Your report is queued for human review.');
       setSubmitted(true);
 
       setTimeout(() => {
@@ -109,7 +109,7 @@ export default function FeedbackForm() {
           <CheckCircle className="w-16 h-16 text-success-600 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Thank You!</h2>
           <p className="text-gray-600 mb-6">
-            Your feedback has been submitted successfully. Our AI will learn from your input to provide better protection.
+            Your report is pending human review. It does not automatically change the detection model.
           </p>
           <div className="text-sm text-gray-500">Redirecting back to form...</div>
         </Card>
@@ -266,8 +266,8 @@ export default function FeedbackForm() {
                 {[
                   'Submit URL with correct classification',
                   'Our team reviews and validates feedback',
-                  'AI model learns and improves accuracy',
-                  'Better protection for all users'
+                  'A moderator records review notes and a decision',
+                  'Only curated, versioned offline datasets can be considered for future training'
                 ].map((step, index) => (
                   <div key={index} className="flex items-start">
                     <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 shrink-0">
@@ -286,16 +286,16 @@ export default function FeedbackForm() {
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-success-50 rounded-lg">
-                  <span className="text-success-700 font-medium">Reports Submitted</span>
-                  <span className="text-success-600 font-bold">2,847</span>
+                  <span className="text-success-700 font-medium">Review policy</span>
+                  <span className="text-success-600 font-bold">Human review</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-primary-50 rounded-lg">
-                  <span className="text-primary-700 font-medium">Model Improvements</span>
-                  <span className="text-primary-600 font-bold">156</span>
+                  <span className="text-primary-700 font-medium">Automatic retraining</span>
+                  <span className="text-primary-600 font-bold">Disabled</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                  <span className="text-purple-700 font-medium">Accuracy Boost</span>
-                  <span className="text-purple-600 font-bold">+12.3%</span>
+                  <span className="text-purple-700 font-medium">Public URL retention</span>
+                  <span className="text-purple-600 font-bold">Not published</span>
                 </div>
               </div>
             </Card>

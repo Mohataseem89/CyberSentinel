@@ -60,7 +60,7 @@ export async function submitFeedback(data) {
     category: data.category,
     actual_threat: data.actual_threat,
     our_prediction: data.our_prediction,
-    description: data.description
+    description: data.description.slice(0, 1000)
   });
   return response.data;
 }
