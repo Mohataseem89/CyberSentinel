@@ -9,7 +9,7 @@ export default function ScannerPage() {
   const [url, setUrl] = useState(''); const [result, setResult] = useState(null); const [error, setError] = useState(''); const [loading, setLoading] = useState(false);
   async function scan(event) {
     event.preventDefault(); setError(''); setResult(null);
-    if (!/^https?:\/\/.test(url.trim())) return setError('Enter a complete HTTP or HTTPS URL, for example https://example.com.');
+    if (!/^https?:\/\//i.test(url.trim())) return setError('Enter a complete HTTP or HTTPS URL, for example https://example.com.');
     setLoading(true); try { setResult(await analyzeURL(url.trim())); } catch (err) { setError(err.response?.data?.error || err.message || 'The scan could not be completed. Please try again.'); } finally { setLoading(false); }
   }
   const verdict = result?.final_verdict || 'Unknown'; const Icon = icons[verdict] || Shield;
