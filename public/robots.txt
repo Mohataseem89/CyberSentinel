@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard
+Disallow: /history
+Disallow: /results/
+Disallow: /admin/
+Disallow: /reporturl
+Disallow: /feedback
+Disallow: /qrcode
+Disallow: /analyze
+
+Sitemap: /sitemap.xml

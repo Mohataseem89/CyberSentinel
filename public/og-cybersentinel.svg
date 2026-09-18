@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">CyberSentinel phishing URL risk checker</title>
+  <desc id="desc">CyberSentinel shield graphic and product title.</desc>
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <circle cx="185" cy="315" r="112" fill="#1d4ed8"/>
+  <path d="M185 224l73 28v62c0 69-43 116-73 134-30-18-73-65-73-134v-62l73-28z" fill="#fff"/>
+  <path d="M151 318l25 25 48-57" fill="none" stroke="#1d4ed8" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="340" y="290" font-family="Arial, sans-serif" font-size="76" font-weight="700" fill="#fff">CyberSentinel</text>
+  <text x="342" y="365" font-family="Arial, sans-serif" font-size="34" fill="#cbd5e1">Phishing URL risk checker</text>
+  <text x="342" y="422" font-family="Arial, sans-serif" font-size="26" fill="#94a3b8">Risk signals, not guarantees of safety.</text>
+</svg>
