@@ -22,6 +22,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     scans = relationship('Scan', back_populates='user', cascade='all, delete-orphan')
+    bulk_jobs = relationship('BulkScanJob', back_populates='user', cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = bcrypt.hashpw(
@@ -109,6 +110,50 @@ class Feedback(Base):
             'description': self.description,
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class BulkScanJob(Base):
+    __tablename__ = 'bulk_scan_jobs'
+    id = Column(Integer, primary_key=True)
+    public_id = Column(String(36), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    status = Column(String(32), nullable=False, default='QUEUED')
+    total_urls = Column(Integer, nullable=False, default=0)
+    processed = Column(Integer, nullable=False, default=0)
+    successful = Column(Integer, nullable=False, default=0)
+    failed = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    expires_at = Column(DateTime, nullable=False)
+    user = relationship('User', back_populates='bulk_jobs')
+    items = relationship('BulkScanItem', back_populates='job', cascade='all, delete-orphan')
+    __table_args__ = (Index('ix_bulk_scan_jobs_owner_status', 'user_id', 'status'),)
+
+class BulkScanItem(Base):
+    __tablename__ = 'bulk_scan_items'
+    id = Column(Integer, primary_key=True)
+    job_id = Column(Integer, ForeignKey('bulk_scan_jobs.id', ondelete='CASCADE'), nullable=False)
+    row_number = Column(Integer, nullable=False)
+    normalized_url = Column(Text)
+    url_redacted = Column(String(512), nullable=False)
+    status = Column(String(32), nullable=False, default='QUEUED')
+    attempts = Column(Integer, nullable=False, default=0)
+    final_verdict = Column(String(50))
+    threat_score = Column(Float)
+    error_code = Column(String(64))
+    job = relationship('BulkScanJob', back_populates='items')
+    __table_args__ = (Index('ix_bulk_scan_items_job_status', 'job_id', 'status'),)
+
+    def to_dict(self):
+        return {
+            'row': self.row_number,
+            'url': self.url_redacted,
+            'status': self.status,
+            'verdict': self.final_verdict,
+            'threat_score': self.threat_score,
+            'error': self.error_code,
         }
 
 

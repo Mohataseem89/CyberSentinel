@@ -10,7 +10,10 @@ from config import Config
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    app.config.update(MAX_CONTENT_LENGTH=int(os.getenv("MAX_REQUEST_BYTES", "32768")))
+    app.config.update(MAX_CONTENT_LENGTH=max(
+        int(os.getenv("MAX_REQUEST_BYTES", "32768")),
+        int(os.getenv("BULK_MAX_CSV_BYTES", "1048576")) + 65536,
+    ))
     CORS(app, resources={r"/*": {"origins": [os.environ.get("FRONTEND_URL", "http://localhost:5173")]}}, supports_credentials=True)
     app.jwt = JWTManager(app)
 

@@ -87,6 +87,7 @@ export default defineConfig({
     globals: true,
     exclude: [
       'e2e/**',
+      'extension/tests/**',
       'node_modules/**',
       'dist/**',
     ],

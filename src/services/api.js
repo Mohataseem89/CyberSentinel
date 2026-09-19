@@ -135,3 +135,25 @@ export const scanQRCode = async (formData) => {
 
 
 export default api;
+
+
+export const createBulkJob = async (file) => {
+  const form = new FormData();
+  form.append('file', file);
+  const response = await api.post('/api/bulk/jobs', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  return response.data;
+};
+export const listBulkJobs = async () => (await api.get('/api/bulk/jobs')).data;
+export const getBulkJob = async (id) => (await api.get(`/api/bulk/jobs/${encodeURIComponent(id)}`)).data;
+export const cancelBulkJob = async (id) => (await api.post(`/api/bulk/jobs/${encodeURIComponent(id)}/cancel`)).data;
+export const downloadBulkResults = async (id) => {
+  const response = await api.get(`/api/bulk/jobs/${encodeURIComponent(id)}/results.csv`, { responseType: 'blob' });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cybersentinel-${id}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};

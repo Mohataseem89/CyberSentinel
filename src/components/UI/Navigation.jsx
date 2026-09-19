@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, BookOpen, Flag, Menu, QrCode, Search, Shield, X } from 'lucide-react';
+import { BarChart3, BookOpen, Upload, Flag, Menu, QrCode, Search, Shield, X } from 'lucide-react';
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,6 +18,7 @@ export default function Navigation() {
     { path: '/reporturl', label: 'Report URL', icon: Flag },
     { path: '/qrcode', label: 'QR Scanner', icon: QrCode },
     { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
+    ...(currentUser ? [{ path: '/bulk', label: 'Bulk Scan', icon: Upload }] : []),
     ...(isAdmin ? [{ path: '/admin/feedback', label: 'Admin Panel', icon: Shield }] : []),
   ];
 

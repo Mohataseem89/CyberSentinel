@@ -9,7 +9,8 @@ import QRScanner from './components/features/QRScanner';
 import Dashboard from './components/features/Dashboard';
 import AdminFeedback from './components/features/AdminFeedback';
 import Login from './components/auth/Login';
-import Register from './components/auth/Register';
+import Register from './components/auth/Register'
+import BulkScanPage from './pages/BulkScanPage';;
 import LearnPage from './pages/LearnPage';
 import PrivacyPage from './pages/PrivacyPage';
 import LimitationsPage from './pages/LimitationsPage';
@@ -56,6 +57,7 @@ function App() {
           <Route path="/feedback" element={<Navigate to="/reporturl" replace />} />
           <Route path="/qrcode" element={<PrivateMeta title="QR Scanner — CyberSentinel"><QRScanner /></PrivateMeta>} />
           <Route path="/dashboard" element={<PrivateMeta title="Dashboard — CyberSentinel"><Dashboard /></PrivateMeta>} />
+          <Route path="/bulk" element={<PrivateMeta title="Bulk URL Scan — CyberSentinel"><BulkScanPage /></PrivateMeta>} />
           <Route path="/history" element={<Navigate to="/dashboard" replace />} />
           <Route path="/results/*" element={<NotFoundPage />} />
           <Route path="/admin/feedback" element={<PrivateMeta title="Admin Feedback — CyberSentinel"><AdminRoute><AdminFeedback /></AdminRoute></PrivateMeta>} />

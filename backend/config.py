@@ -43,3 +43,8 @@ class Config:
     SECRET_KEY = os.environ["SECRET_KEY"]
     MAX_REQUEST_BYTES = int(os.getenv("MAX_REQUEST_BYTES", "32768"))
     API_RATE_LIMIT_PER_MINUTE = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "30"))
+    BULK_MAX_CSV_BYTES = int(os.getenv("BULK_MAX_CSV_BYTES", "1048576"))
+    BULK_MAX_URLS_PER_JOB = int(os.getenv("BULK_MAX_URLS_PER_JOB", "1000"))
+    BULK_MAX_ACTIVE_JOBS_PER_USER = int(os.getenv("BULK_MAX_ACTIVE_JOBS_PER_USER", "2"))
+    BULK_MAX_JOBS_PER_DAY = int(os.getenv("BULK_MAX_JOBS_PER_DAY", "10"))
+    BULK_RETENTION_HOURS = int(os.getenv("BULK_RETENTION_HOURS", "24"))
