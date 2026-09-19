@@ -157,3 +157,15 @@ export const downloadBulkResults = async (id) => {
   a.remove();
   URL.revokeObjectURL(url);
 };
+
+
+export const getFileScanCapabilities = async () => (await api.get('/api/file-scans/capabilities')).data;
+export const createFileScan = async (file, consent) => {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('consent', consent ? 'true' : 'false');
+  const response = await api.post('/api/file-scans', form);
+  return response.data;
+};
+export const listFileScans = async () => (await api.get('/api/file-scans')).data;
+export const getFileScan = async (id) => (await api.get(`/api/file-scans/${encodeURIComponent(id)}`)).data;

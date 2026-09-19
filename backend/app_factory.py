@@ -13,6 +13,7 @@ def create_app():
     app.config.update(MAX_CONTENT_LENGTH=max(
         int(os.getenv("MAX_REQUEST_BYTES", "32768")),
         int(os.getenv("BULK_MAX_CSV_BYTES", "1048576")) + 65536,
+        int(os.getenv("FILE_SCAN_MAX_BYTES", "10485760")) + 65536,
     ))
     CORS(app, resources={r"/*": {"origins": [os.environ.get("FRONTEND_URL", "http://localhost:5173")]}}, supports_credentials=True)
     app.jwt = JWTManager(app)
@@ -20,6 +21,17 @@ def create_app():
     @app.before_request
     def request_start():
         g.request_started = time.monotonic()
+        # Preserve the small request limit for normal API routes even though
+        # authenticated upload endpoints need larger multipart bodies.
+        content_length = request.content_length or 0
+        if request.path.startswith('/api/file-scans'):
+            limit = int(os.getenv("FILE_SCAN_MAX_BYTES", "10485760")) + 65536
+        elif request.path.startswith('/api/bulk/jobs'):
+            limit = int(os.getenv("BULK_MAX_CSV_BYTES", "1048576")) + 65536
+        else:
+            limit = int(os.getenv("MAX_REQUEST_BYTES", "32768"))
+        if content_length > limit:
+            return jsonify({"error": "Request body is too large."}), 413
 
     @app.after_request
     def security_headers(response):

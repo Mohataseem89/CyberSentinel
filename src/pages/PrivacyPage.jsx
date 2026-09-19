@@ -26,6 +26,7 @@ export default function PrivacyPage() {
           <div><h2 className="text-2xl font-semibold text-slate-950">Operator responsibility</h2><p className="mt-2">Retention schedules, backups, infrastructure logs, database access, deletion workflows, and regional legal requirements depend on the deployment. Operators should document these choices and avoid claiming stronger privacy guarantees than their actual hosting configuration provides.</p></div>
         </section>
       </article>
+    <section className="mt-8"><h2 className="text-xl font-semibold">File analysis</h2><p className="mt-2 text-gray-700">File analysis requires explicit consent. Uploads are treated as untrusted, stored privately under randomized names only while queued/scanning, and deleted immediately after analysis attempts. Scan metadata and sanitized results may be retained for the configured retention period. Raw file contents are not logged or exposed through public URLs. HTML analysis is static and does not execute scripts or load remote resources.</p></section>
     </main>
   );
 }

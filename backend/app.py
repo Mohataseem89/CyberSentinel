@@ -18,6 +18,7 @@ from app_factory import create_app
 from middleware import FixedWindowLimiter
 from routes.history import history_bp
 from routes.bulk import bulk_bp
+from routes.file_scan import file_scan_bp
 
 # Load environment variables
 load_dotenv()
@@ -73,6 +74,7 @@ app.register_blueprint(auth_bp, url_prefix='/api/auth')
 # They remain disabled until rewritten as owner-scoped aggregates.
 app.register_blueprint(history_bp, url_prefix='/api')
 app.register_blueprint(bulk_bp, url_prefix='/api')
+app.register_blueprint(file_scan_bp, url_prefix='/api')
 
 # Import services
 from services.url_analyzer import HybridURLAnalyzer

@@ -23,6 +23,7 @@ class User(Base):
 
     scans = relationship('Scan', back_populates='user', cascade='all, delete-orphan')
     bulk_jobs = relationship('BulkScanJob', back_populates='user', cascade='all, delete-orphan')
+    file_scan_jobs = relationship('FileScanJob', back_populates='user', cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = bcrypt.hashpw(
@@ -155,6 +156,32 @@ class BulkScanItem(Base):
             'threat_score': self.threat_score,
             'error': self.error_code,
         }
+
+
+class FileScanJob(Base):
+    __tablename__ = 'file_scan_jobs'
+    id = Column(Integer, primary_key=True)
+    public_id = Column(String(36), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    status = Column(String(32), nullable=False, default='QUEUED')
+    attempts = Column(Integer, nullable=False, default=0)
+    original_name = Column(String(120), nullable=False)
+    storage_path = Column(Text)
+    sha256 = Column(String(64), nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    detected_kind = Column(String(32))
+    detected_mime = Column(String(120))
+    malware_status = Column(String(32))
+    html_risk = Column(String(16))
+    verdict = Column(String(40))
+    indicators_json = Column(Text)
+    error_code = Column(String(64))
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    expires_at = Column(DateTime, nullable=False)
+    user = relationship('User', back_populates='file_scan_jobs')
+    __table_args__ = (Index('ix_file_scan_jobs_owner_status', 'user_id', 'status'), Index('ix_file_scan_jobs_expiry', 'expires_at'))
 
 
 def init_db():
