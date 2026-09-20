@@ -30,3 +30,9 @@ venv/
 __pycache__/
 *.pyc
 CyberSentinel.md
+dist-extension/
+cybersentinel-extension.zip
+backend/var/
+uploads/
+test-results/
+playwright-report/

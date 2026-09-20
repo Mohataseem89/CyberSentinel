@@ -7,7 +7,14 @@ import bcrypt
 Base = declarative_base()
 
 # Database engine
-engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+engine = create_engine(
+    Config.SQLALCHEMY_DATABASE_URI,
+    pool_pre_ping=True,
+    pool_size=Config.DB_POOL_SIZE,
+    max_overflow=Config.DB_MAX_OVERFLOW,
+    pool_timeout=Config.DB_POOL_TIMEOUT,
+    pool_recycle=Config.DB_POOL_RECYCLE,
+)
 Session = sessionmaker(bind=engine)
 
 class User(Base):

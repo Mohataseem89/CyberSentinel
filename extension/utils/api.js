@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:5000'; // Replace with the exact HTTPS production API origin before store submission.
+const API_BASE_URL = '__CYBERSENTINEL_API_ORIGIN__';
 const SENSITIVE_QUERY_KEYS = /^(token|access_token|auth|authorization|code|password|passwd|secret|api_?key|session|sid|jwt|email)$/i;
 
 function sanitizeUrlForScan(input) {
@@ -15,8 +15,8 @@ function sanitizeUrlForScan(input) {
 
 function validateResult(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('CyberSentinel returned an invalid response.');
-  const verdicts = new Set(['Safe', 'Suspicious', 'Dangerous', 'Unknown']);
-  const verdict = verdicts.has(data.final_verdict) ? data.final_verdict : 'Unknown';
+  const verdictMap = { Safe:'Safe', Benign:'Safe', Suspicious:'Suspicious', 'Potentially Risky':'Suspicious', Dangerous:'Dangerous', Phishing:'Dangerous', Malicious:'Dangerous', Unknown:'Unknown' };
+  const verdict = verdictMap[data.final_verdict] || 'Unknown';
   const score = Number.isFinite(data.threat_score) ? Math.max(0, Math.min(100, data.threat_score)) : null;
   const indicators = Array.isArray(data.indicators) ? data.indicators.filter(v => typeof v === 'string').slice(0, 8) : [];
   return { final_verdict: verdict, threat_score: score, indicators, limitations: Array.isArray(data.limitations) ? data.limitations.filter(v => typeof v === 'string').slice(0, 4) : [] };

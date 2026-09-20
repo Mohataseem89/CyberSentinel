@@ -10,9 +10,18 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test
+      - run: node --test extension/tests/manual-extension.test.mjs
       - run: npm run build
+        env:
+          VITE_API_BASE_URL: https://api.example.invalid
       - run: npm run perf:build
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
+      - run: sudo apt-get update && sudo apt-get install -y libmagic1 libzbar0
       - run: pip install -r backend/requirements.txt
       - run: PYTHONPATH=backend python -m unittest discover -s backend/tests -v
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          SECRET_KEY: ci-only-secret-key-at-least-32-characters
+          JWT_SECRET_KEY: ci-only-jwt-secret-at-least-32-characters
+      - run: docker build -t cybersentinel:${{ github.sha }} .

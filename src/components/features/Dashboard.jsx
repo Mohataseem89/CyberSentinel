@@ -23,13 +23,9 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import axios from 'axios';
+import api from '../../services/api';
 import toast from 'react-hot-toast';
 
-// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-// const API_BASE_URL = 'http://localhost:5000';
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 export default function Dashboard() {
   const [stats, setStats] = useState({
     total_scans: 0,
@@ -42,7 +38,6 @@ export default function Dashboard() {
   });
 
   const [scanHistory, setScanHistory] = useState([]);
-  const [topThreats, setTopThreats] = useState([]);
   const [dailyScans, setDailyScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -60,50 +55,33 @@ export default function Dashboard() {
 
   const loadDashboardData = async (showLoader = true) => {
     if (showLoader) setLoading(true);
-
     try {
-      const statsRes = await axios.get(`${API_BASE_URL}/api/analytics/stats`);
-      console.log('statsRes.data =', statsRes.data);
-      setStats(normalizeStats(statsRes.data));
+      const response = await api.get('/api/history?limit=100');
+      const scans = (Array.isArray(response.data) ? response.data : response.data?.scans || []).map((scan) => ({
+        ...scan, verdict: scan.final_verdict || scan.verdict || 'Unknown'
+      }));
+      setScanHistory(scans);
+      const benign = scans.filter((s) => ['Benign','Safe'].includes(s.verdict)).length;
+      const suspicious = scans.filter((s) => ['Suspicious','Potentially Risky'].includes(s.verdict)).length;
+      const phishing = scans.filter((s) => ['Phishing','Dangerous','Malicious'].includes(s.verdict)).length;
+      const today = new Date().toISOString().slice(0,10);
+      setStats(normalizeStats({
+        total_scans: scans.length, benign_scans: benign, suspicious_scans: suspicious, phishing_scans: phishing,
+        avg_threat_score: scans.length ? scans.reduce((sum,x)=>sum+Number(x.threat_score||0),0)/scans.length : 0,
+        scans_today: scans.filter((x)=>String(x.created_at||'').slice(0,10)===today).length, blocked_threats: phishing
+      }));
+      const days=[];
+      for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); const key=d.toISOString().slice(0,10); const rows=scans.filter(x=>String(x.created_at||'').slice(0,10)===key); days.push({date:key,benign:rows.filter(x=>['Benign','Safe'].includes(x.verdict)).length,suspicious:rows.filter(x=>['Suspicious','Potentially Risky'].includes(x.verdict)).length,phishing:rows.filter(x=>['Phishing','Dangerous','Malicious'].includes(x.verdict)).length,total:rows.length}); }
+      setDailyScans(days);
     } catch (error) {
-      console.error('Stats API failed:', error);
-    }
-
-    try {
-      const historyRes = await axios.get(`${API_BASE_URL}/api/analytics/history?limit=50`);
-      console.log('historyRes.data =', historyRes.data);
-      setScanHistory(Array.isArray(historyRes.data?.scans) ? historyRes.data.scans : []);
-    } catch (error) {
-      console.error('History API failed:', error);
-    }
-
-    try {
-      const dailyRes = await axios.get(`${API_BASE_URL}/api/analytics/daily?days=7`);
-      console.log('dailyRes.data =', dailyRes.data);
-      setDailyScans(Array.isArray(dailyRes.data?.daily_scans) ? dailyRes.data.daily_scans : []);
-    } catch (error) {
-      console.error('Daily API failed:', error);
-    }
-
-    try {
-      const threatsRes = await axios.get(`${API_BASE_URL}/api/analytics/top-threats?limit=10`);
-      console.log('threatsRes.data =', threatsRes.data);
-      setTopThreats(Array.isArray(threatsRes.data?.threats) ? threatsRes.data.threats : []);
-    } catch (error) {
-      console.error('Top threats API failed:', error);
-    }
-
-    if (showLoader) setLoading(false);
+      toast.error(error?.message || 'Dashboard data could not be loaded.');
+    } finally { if (showLoader) setLoading(false); }
   };
 
-  useEffect(() => {
-    loadDashboardData(true);
-  }, []);
+  useEffect(() => { loadDashboardData(true); }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      loadDashboardData(false);
-    }, 30000);
+    const interval=setInterval(()=>loadDashboardData(false),30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -124,9 +102,9 @@ export default function Dashboard() {
     filter === 'all'
       ? scanHistory
       : scanHistory.filter((s) => {
-          if (filter === 'benign') return s.verdict === 'Benign';
+          if (filter === 'benign') return ['Benign','Safe'].includes(s.verdict);
           if (filter === 'suspicious') return s.verdict === 'Suspicious' || s.verdict === 'Potentially Risky';
-          if (filter === 'phishing') return s.verdict === 'Phishing';
+          if (filter === 'phishing') return ['Phishing','Dangerous','Malicious'].includes(s.verdict);
           return true;
         });
 

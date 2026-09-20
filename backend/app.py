@@ -32,38 +32,27 @@ app = create_app()
 jwt = app.jwt
 # app = Flask(__name__)
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-print(">>> LOADED UPDATED app.py <<<")
-print(">>> FILE PATH:", __file__)
 
 FixedWindowLimiter(app)
 
 @jwt.unauthorized_loader
 def unauthorized_callback(reason):
-    print("JWT unauthorized:", reason)
     return jsonify({"error": reason}), 401
 
 @jwt.invalid_token_loader
 def invalid_token_callback(reason):
-    print("JWT invalid:", reason)
     return jsonify({"error": reason}), 422
 
 @jwt.expired_token_loader
 def expired_token_callback(jwt_header, jwt_payload):
-    print("JWT expired")
     return jsonify({"error": "Token has expired"}), 401
 
 @jwt.revoked_token_loader
 def revoked_token_callback(jwt_header, jwt_payload):
-    print("JWT revoked")
     return jsonify({"error": "Token has been revoked"}), 401
 
 @jwt.needs_fresh_token_loader
 def fresh_token_callback(jwt_header, jwt_payload):
-    print("JWT fresh token required")
     return jsonify({"error": "Fresh token required"}), 401
 
 
@@ -102,7 +91,23 @@ def home():
 
 @app.route('/health')
 def health():
-    return jsonify({"status": "healthy", "analyzer": "URL-safe ML + reputation checks", "remote_content_fetching": "disabled"})
+    return jsonify({"status":"healthy"})
+
+@app.route('/ready')
+def ready():
+    from sqlalchemy import text
+    from models import Session
+    session=Session()
+    try:
+        session.execute(text("SELECT 1"))
+        if predictor.model is None:
+            return jsonify({"status":"not_ready","database":"ok","model":"unavailable"}),503
+        return jsonify({"status":"ready","database":"ok","model":"ok"})
+    except Exception:
+        app.logger.exception("Readiness check failed")
+        return jsonify({"status":"not_ready","database":"unavailable"}),503
+    finally:
+        session.close()
 
 # URL ANALYSIS
 @app.route("/analyze", methods=["POST"])
@@ -408,70 +413,31 @@ def reload_model():
 # QR CODE SCANNER
 @app.route("/api/qr/scan", methods=["POST"])
 def scan_qr():
-    """Scan QR code from uploaded image"""
+    """Decode a QR image from a private temporary file and delete it immediately."""
+    import tempfile
+    image=request.files.get("image")
+    if not image or not image.filename:
+        return jsonify({"error":"An image file is required"}),400
+    suffix=os.path.splitext(image.filename)[1].lower()[:10]
+    path=None
     try:
-        if "image" not in request.files:
-            return jsonify({"error": "No image file uploaded"}), 400
-        
-        image = request.files["image"]
-        
-        if image.filename == "":
-            return jsonify({"error": "Empty filename"}), 400
-        
-        # Save image
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"qr_{image.filename}")
-        image.save(image_path)
-        
-        print(f"[+] Scanning QR code from: {image.filename}")
-        
-        # Decode QR
-        scanner = QRCodeScanner()
-        result = scanner.decode_qr_code(image_path)
-        
-        # Delete file
-        try:
-            os.remove(image_path)
-        except:
-            pass
-        
-        if result["status"] == "error":
-            return jsonify(result), 400
-        
-       # Auto-analyze URL if found
-        analysis_result = None
-        if result["is_url"]:
-            url = result["data"]
-            
-            try:
-                analyzer = HybridURLAnalyzer()
-                analysis_result = analyzer.analyze(url)
-
-                # Save QR scan to database
-                save_scan({
-                    'user_id': None,
-                    'url': url,
-                    'domain': urlparse(url).netloc,
-                    'verdict': analysis_result.get('final_verdict'),
-                    'threat_score': analysis_result.get('threat_score'),
-                    'ml_prediction': analysis_result.get('ml_prediction', {}).get('prediction') if analysis_result.get('ml_prediction') else None,
-                    'virustotal_malicious': analysis_result.get('virustotal_analysis', {}).get('malicious', 0) if analysis_result.get('virustotal_analysis') else 0,
-                    'virustotal_suspicious': analysis_result.get('virustotal_analysis', {}).get('suspicious', 0) if analysis_result.get('virustotal_analysis') else 0,
-                })
-            except Exception as e:
-                print(f" Auto-analysis failed: {e}")
-        
-        return jsonify({
-            "success": True,
-            "qr_data": result["data"],
-            "data_type": result["type"],
-            "is_url": result["is_url"],
-            "qr_count": result.get("qr_count", 1),
-            "url_analysis": analysis_result
-        }), 200
-        
-    except Exception as e:
-        print(f"QR scan error: {e}")
-        return jsonify({"error": str(e)}), 500
+        with tempfile.NamedTemporaryFile(prefix="cybersentinel-qr-",suffix=suffix,delete=False) as tmp:
+            path=tmp.name
+            image.save(tmp)
+        result=QRCodeScanner().decode_qr_code(path)
+        if result.get("status")=="error": return jsonify(result),400
+        analysis_result=None
+        if result.get("is_url"):
+            try: analysis_result=HybridURLAnalyzer().analyze(result["data"])
+            except Exception: app.logger.exception("QR URL analysis failed")
+        return jsonify({"success":True,"qr_data":result.get("data"),"data_type":result.get("type"),"is_url":result.get("is_url"),"qr_count":result.get("qr_count",1),"url_analysis":analysis_result}),200
+    except Exception:
+        app.logger.exception("QR scan failed")
+        return jsonify({"error":"QR scan could not be completed."}),500
+    finally:
+        if path:
+            try: os.remove(path)
+            except OSError: pass
 
 # START SERVER
 if __name__ == "__main__":
@@ -484,4 +450,4 @@ if __name__ == "__main__":
     print(" Running on http://localhost:5000")
     print("="*60 + "\n")
     
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="127.0.0.1", port=5000)

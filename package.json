@@ -11,7 +11,8 @@
     "test:e2e": "playwright test",
     "perf:build": "node scripts/check-build-budget.mjs",
     "preview": "vite preview",
-    "seo:sitemap": "node scripts/generate-sitemap.mjs"
+    "seo:sitemap": "node scripts/generate-sitemap.mjs",
+    "extension:package": "node scripts/package-extension.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
