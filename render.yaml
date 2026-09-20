@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: cybersentinel-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: FILE_SCAN_ENABLED
+        value: "false"
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: GUNICORN_THREADS
+        value: "4"
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_URLS
+        sync: false
+      - key: VIRUSTOTAL_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+  - type: worker
+    name: cybersentinel-bulk-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: python -m workers.bulk_worker
+    plan: starter
+    autoDeployTrigger: commit
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: FRONTEND_URLS
+        sync: false
+      - key: VIRUSTOTAL_API_KEY
+        sync: false
