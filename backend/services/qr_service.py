@@ -94,7 +94,9 @@ class QRCodeScanner:
                 len(decoded_objects),
             )
 
-            is_url = decoded_data.startswith(("http://", "https://"))
+            decoded_data = decoded_data.strip().lstrip("\ufeff")
+
+            is_url = decoded_data.lower().startswith(("http://", "https://"))
 
             return {
                 "status": "success",
