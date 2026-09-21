@@ -6,11 +6,12 @@ from datetime import datetime, timedelta
 
 analytics_bp = Blueprint("analytics_bp", __name__)
 
-# DATABASE_URL = "postgresql://postgres:PG%40dmin89@localhost:5432/cybersentinel"
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///cybersentinel.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_connection():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not configured")
     return psycopg2.connect(DATABASE_URL)
 
 
@@ -23,27 +24,43 @@ def get_analytics_stats():
         cur.execute("""
             SELECT
                 COUNT(*) AS total_scans,
-                COUNT(*) FILTER (WHERE final_verdict = 'Benign') AS benign_scans,
                 COUNT(*) FILTER (
-                    WHERE final_verdict IN ('Suspicious', 'Potentially Risky')
+                    WHERE final_verdict = 'Safe'
+                ) AS safe_scans,
+                COUNT(*) FILTER (
+                    WHERE final_verdict = 'Suspicious'
                 ) AS suspicious_scans,
-                COUNT(*) FILTER (WHERE final_verdict = 'Phishing') AS phishing_scans,
+                COUNT(*) FILTER (
+                    WHERE final_verdict = 'Dangerous'
+                ) AS dangerous_scans,
+                COUNT(*) FILTER (
+                    WHERE final_verdict = 'Unknown'
+                ) AS unknown_scans,
                 COALESCE(AVG(threat_score), 0) AS avg_threat_score,
-                COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) AS scans_today,
-                COUNT(*) FILTER (WHERE threat_score >= 70) AS blocked_threats
+                COUNT(*) FILTER (
+                    WHERE DATE(created_at) = CURRENT_DATE
+                ) AS scans_today,
+                COUNT(*) FILTER (
+                    WHERE final_verdict = 'Dangerous'
+                ) AS blocked_threats
             FROM scans
         """)
 
         stats = cur.fetchone()
 
-        cur.close()
-        conn.close()
-
         return jsonify({
             "total_scans": stats["total_scans"] or 0,
-            "benign_scans": stats["benign_scans"] or 0,
+
+            # Canonical current names
+            "safe_scans": stats["safe_scans"] or 0,
             "suspicious_scans": stats["suspicious_scans"] or 0,
-            "phishing_scans": stats["phishing_scans"] or 0,
+            "dangerous_scans": stats["dangerous_scans"] or 0,
+            "unknown_scans": stats["unknown_scans"] or 0,
+
+            # Temporary backwards-compatible aliases for the existing frontend
+            "benign_scans": stats["safe_scans"] or 0,
+            "phishing_scans": stats["dangerous_scans"] or 0,
+
             "avg_threat_score": float(stats["avg_threat_score"] or 0),
             "scans_today": stats["scans_today"] or 0,
             "blocked_threats": stats["blocked_threats"] or 0
@@ -52,30 +69,46 @@ def get_analytics_stats():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    finally:
+        if "cur" in locals():
+            cur.close()
+        if "conn" in locals():
+            conn.close()
+
 
 @analytics_bp.route("/api/analytics/history", methods=["GET"])
 def get_scan_history():
     try:
-        page = request.args.get("page", 1, type=int)
-        limit = request.args.get("limit", 20, type=int)
-        filter_type = request.args.get("filter", "all")
+        page = max(request.args.get("page", 1, type=int), 1)
+        limit = min(max(request.args.get("limit", 20, type=int), 1), 100)
+        filter_type = request.args.get("filter", "all").lower()
 
         offset = (page - 1) * limit
 
         where_clause = ""
         params = []
 
-        if filter_type == "benign":
-            where_clause = "WHERE final_verdict = 'Benign'"
-        elif filter_type == "suspicious":
-            where_clause = "WHERE final_verdict IN ('Suspicious', 'Potentially Risky')"
-        elif filter_type == "phishing":
-            where_clause = "WHERE final_verdict = 'Phishing'"
+        verdict_filters = {
+            "safe": "Safe",
+            "benign": "Safe",
+            "suspicious": "Suspicious",
+            "dangerous": "Dangerous",
+            "phishing": "Dangerous",
+            "unknown": "Unknown",
+        }
+
+        if filter_type in verdict_filters:
+            where_clause = "WHERE final_verdict = %s"
+            params.append(verdict_filters[filter_type])
 
         conn = get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        count_query = f"SELECT COUNT(*) AS total FROM scans {where_clause}"
+        count_query = f"""
+            SELECT COUNT(*) AS total
+            FROM scans
+            {where_clause}
+        """
         cur.execute(count_query, params)
         total = cur.fetchone()["total"]
 
@@ -83,7 +116,7 @@ def get_scan_history():
             SELECT
                 id,
                 user_id,
-                url,
+                url_redacted,
                 domain,
                 final_verdict AS verdict,
                 threat_score,
@@ -97,11 +130,9 @@ def get_scan_history():
             ORDER BY created_at DESC
             LIMIT %s OFFSET %s
         """
+
         cur.execute(history_query, params + [limit, offset])
         scans = cur.fetchall()
-
-        cur.close()
-        conn.close()
 
         return jsonify({
             "scans": scans,
@@ -113,11 +144,17 @@ def get_scan_history():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    finally:
+        if "cur" in locals():
+            cur.close()
+        if "conn" in locals():
+            conn.close()
+
 
 @analytics_bp.route("/api/analytics/daily", methods=["GET"])
 def get_daily_scans():
     try:
-        days = request.args.get("days", 7, type=int)
+        days = min(max(request.args.get("days", 7, type=int), 1), 90)
         start_date = datetime.now().date() - timedelta(days=days - 1)
 
         conn = get_connection()
@@ -135,18 +172,26 @@ def get_daily_scans():
         """, [start_date])
 
         rows = cur.fetchall()
-        cur.close()
-        conn.close()
 
         daily_map = {}
+
         for i in range(days):
             d = start_date + timedelta(days=i)
             key = d.strftime("%Y-%m-%d")
+
             daily_map[key] = {
                 "date": key,
-                "benign": 0,
+
+                # Canonical names
+                "safe": 0,
                 "suspicious": 0,
+                "dangerous": 0,
+                "unknown": 0,
+
+                # Temporary backwards-compatible frontend aliases
+                "benign": 0,
                 "phishing": 0,
+
                 "total": 0
             }
 
@@ -158,12 +203,19 @@ def get_daily_scans():
             if day not in daily_map:
                 continue
 
-            if verdict == "Benign":
+            if verdict == "Safe":
+                daily_map[day]["safe"] += count
                 daily_map[day]["benign"] += count
-            elif verdict in ("Suspicious", "Potentially Risky"):
+
+            elif verdict == "Suspicious":
                 daily_map[day]["suspicious"] += count
-            elif verdict == "Phishing":
+
+            elif verdict == "Dangerous":
+                daily_map[day]["dangerous"] += count
                 daily_map[day]["phishing"] += count
+
+            elif verdict == "Unknown":
+                daily_map[day]["unknown"] += count
 
             daily_map[day]["total"] += count
 
@@ -174,11 +226,17 @@ def get_daily_scans():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    finally:
+        if "cur" in locals():
+            cur.close()
+        if "conn" in locals():
+            conn.close()
+
 
 @analytics_bp.route("/api/analytics/top-threats", methods=["GET"])
 def get_top_threats():
     try:
-        limit = request.args.get("limit", 10, type=int)
+        limit = min(max(request.args.get("limit", 10, type=int), 1), 100)
 
         conn = get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -188,7 +246,7 @@ def get_top_threats():
                 domain,
                 COUNT(*) AS count
             FROM scans
-            WHERE final_verdict = 'Phishing'
+            WHERE final_verdict = 'Dangerous'
               AND domain IS NOT NULL
               AND domain <> ''
             GROUP BY domain
@@ -198,10 +256,13 @@ def get_top_threats():
 
         threats = cur.fetchall()
 
-        cur.close()
-        conn.close()
-
         return jsonify({"threats": threats}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+    finally:
+        if "cur" in locals():
+            cur.close()
+        if "conn" in locals():
+            conn.close()
