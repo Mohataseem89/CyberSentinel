@@ -54,7 +54,18 @@ api.interceptors.response.use(
 );
 
 export const analyzeURL = async (url) => {
-  const response = await api.post('/analyze', { url });
+  const token = localStorage.getItem('access_token');
+
+  const response = await api.post(
+    '/analyze',
+    { url },
+    {
+      headers: token
+        ? { 'X-Retain-Scan': 'true' }
+        : {}
+    }
+  );
+
   return response.data;
 };
 
