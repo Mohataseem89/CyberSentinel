@@ -96,13 +96,13 @@ class QRCodeScanner:
 
             decoded_data = decoded_data.strip().lstrip("\ufeff")
 
-            is_url = decoded_data.lower().startswith(("http://", "https://"))
+            normalized_url = QRCodeScanner.extract_url_from_data(decoded_data)
 
             return {
                 "status": "success",
-                "data": decoded_data,
+                "data": normalized_url or decoded_data,
                 "type": data_type,
-                "is_url": is_url,
+                "is_url": normalized_url is not None,
                 "qr_count": len(decoded_objects),
             }
 
