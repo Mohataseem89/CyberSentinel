@@ -1,98 +1,161 @@
-import cv2
-from pyzbar import pyzbar
-from PIL import Image
-import numpy as np
 import logging
+
+import cv2
+import numpy as np
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
+
 class QRCodeScanner:
-    """QR Code scanning and URL extraction"""
-    
+    """QR Code scanning and URL extraction."""
+
+    @staticmethod
+    def _get_pyzbar():
+        """
+        Load pyzbar only when QR decoding is requested.
+
+        pyzbar depends on the native ZBar shared library. Some production
+        environments do not provide ZBar, so importing pyzbar at module
+        startup must not prevent the entire API from starting.
+        """
+        try:
+            from pyzbar import pyzbar
+
+            return pyzbar
+        except (ImportError, OSError) as exc:
+            logger.warning(
+                "QR decoding is unavailable because the ZBar runtime "
+                "could not be loaded."
+            )
+            return None
+
     @staticmethod
     def decode_qr_code(image_path):
         """
-        Decode QR code from image and extract URL
-        Returns: dict with url, data_type, and status
+        Decode QR code from image and extract its payload.
+
+        Returns a dictionary containing status and decoded QR information.
+        QR decoding being unavailable must not crash the application.
         """
+        pyzbar = QRCodeScanner._get_pyzbar()
+
+        if pyzbar is None:
+            return {
+                "status": "unavailable",
+                "message": (
+                    "QR code decoding is temporarily unavailable on "
+                    "this deployment."
+                ),
+            }
+
         try:
-            # Read image
+            # Read image with OpenCV first.
             img = cv2.imread(image_path)
-            
+
             if img is None:
                 return {
                     "status": "error",
-                    "message": "Failed to read image file"
+                    "message": "Failed to read image file",
                 }
-            
-            # Decode QR codes
+
             decoded_objects = pyzbar.decode(img)
-            
+
             if not decoded_objects:
-                # Try with PIL as fallback
-                pil_img = Image.open(image_path)
-                img_array = np.array(pil_img)
-                decoded_objects = pyzbar.decode(img_array)
-            
+                # Try PIL representation as a fallback.
+                with Image.open(image_path) as pil_img:
+                    img_array = np.array(pil_img)
+                    decoded_objects = pyzbar.decode(img_array)
+
             if not decoded_objects:
                 return {
                     "status": "error",
-                    "message": "No QR code detected in image"
+                    "message": "No QR code detected in image",
                 }
-            
-            # Extract data from first QR code
+
             qr_data = decoded_objects[0]
-            decoded_data = qr_data.data.decode('utf-8')
+
+            try:
+                decoded_data = qr_data.data.decode("utf-8")
+            except UnicodeDecodeError:
+                return {
+                    "status": "error",
+                    "message": "QR code contains unsupported text encoding",
+                }
+
             data_type = qr_data.type
-            
-            logger.info(f"QR Code decoded: {decoded_data}")
-            
-            # Check if it's a URL
-            is_url = decoded_data.startswith(('http://', 'https://'))
-            
+
+            # Never log the raw QR payload. It can contain URLs with
+            # credentials, reset tokens, query parameters, or other
+            # sensitive information.
+            logger.info(
+                "QR code decoded successfully (type=%s, count=%d)",
+                data_type,
+                len(decoded_objects),
+            )
+
+            is_url = decoded_data.startswith(("http://", "https://"))
+
             return {
                 "status": "success",
                 "data": decoded_data,
                 "type": data_type,
                 "is_url": is_url,
-                "qr_count": len(decoded_objects)
+                "qr_count": len(decoded_objects),
             }
-            
-        except Exception as e:
-            logger.error(f"QR decode error: {str(e)}")
+
+        except (OSError, ValueError) as exc:
+            logger.warning(
+                "QR decode failed due to image/runtime error: %s",
+                type(exc).__name__,
+            )
             return {
                 "status": "error",
-                "message": f"Failed to decode QR code: {str(e)}"
+                "message": "Failed to decode QR code",
             }
-    
+        except Exception:
+            logger.exception("Unexpected QR decode failure")
+            return {
+                "status": "error",
+                "message": "Failed to decode QR code",
+            }
+
     @staticmethod
     def extract_url_from_data(data):
         """
-        Extract URL from QR code data
-        Handles various formats
+        Extract URL from QR code data.
+
+        Handles direct URLs and selected common QR payload formats.
         """
+        if not isinstance(data, str):
+            return None
+
+        data = data.strip()
+
+        if not data:
+            return None
+
         # Direct URL
-        if data.startswith(('http://', 'https://')):
+        if data.startswith(("http://", "https://")):
             return data
-        
+
         # WiFi QR code format: WIFI:T:WPA;S:SSID;P:password;;
-        if data.startswith('WIFI:'):
+        if data.startswith("WIFI:"):
             return None
-        
-        # VCard format
-        if data.startswith('BEGIN:VCARD'):
-            # Extract URL from vCard if present
-            for line in data.split('\n'):
-                if line.startswith('URL:'):
-                    return line.replace('URL:', '').strip()
+
+        # vCard format
+        if data.startswith("BEGIN:VCARD"):
+            for line in data.splitlines():
+                if line.startswith("URL:"):
+                    return line.replace("URL:", "", 1).strip()
             return None
-        
-        # SMS/Tel formats
-        if data.startswith(('tel:', 'sms:', 'mailto:')):
+
+        # SMS/Tel/email formats
+        if data.startswith(("tel:", "sms:", "mailto:")):
             return None
-        
-        # If it looks like a URL without protocol
-        if '.' in data and ' ' not in data:
+
+        # URL-like value without protocol
+        if "." in data and " " not in data:
             return f"https://{data}"
-        
+
         return None
