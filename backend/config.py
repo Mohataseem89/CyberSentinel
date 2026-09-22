@@ -46,7 +46,7 @@ class Config:
     if IS_PRODUCTION:
         if not FRONTEND_ORIGINS or any(not x.startswith("https://") for x in FRONTEND_ORIGINS):
             raise RuntimeError("Production FRONTEND_URLS must contain only explicit HTTPS origins.")
-    MAX_REQUEST_BYTES=int(os.getenv("MAX_REQUEST_BYTES","32768"))
+    MAX_REQUEST_BYTES=int(os.getenv("MAX_REQUEST_BYTES","10 * 1024 * 1024"))
     API_RATE_LIMIT_PER_MINUTE=int(os.getenv("API_RATE_LIMIT_PER_MINUTE","30"))
     BULK_MAX_CSV_BYTES=int(os.getenv("BULK_MAX_CSV_BYTES","1048576"))
     BULK_MAX_URLS_PER_JOB=int(os.getenv("BULK_MAX_URLS_PER_JOB","1000"))
