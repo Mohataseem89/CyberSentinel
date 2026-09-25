@@ -62,14 +62,40 @@ def process(job_id):
             s.commit();s.close();time.sleep(min(2**max(attempts,1),8))
 
 def main():
-    recover_stale(); last_cleanup=0.0
+    """
+    Process queued bulk jobs.
+
+    Default mode is run-to-completion for Cloud Run Jobs:
+    process all currently queued jobs, then exit.
+
+    Set BULK_WORKER_CONTINUOUS=true only when running as a
+    traditional always-on background worker.
+    """
+    continuous = os.getenv(
+        "BULK_WORKER_CONTINUOUS", "false"
+    ).strip().lower() in {"1", "true", "yes"}
+
+    recover_stale()
+
+    try:
+        cleanup()
+    except Exception:
+        log.exception("Bulk retention cleanup failed")
+
     while True:
-        now=time.monotonic()
-        if now-last_cleanup>=CLEANUP_INTERVAL:
-            try: cleanup()
-            except Exception: log.exception('Bulk retention cleanup failed')
-            last_cleanup=now
-        job_id=claim_job()
-        if job_id:process(job_id)
-        else:time.sleep(POLL)
-if __name__=='__main__':main()
+        job_id = claim_job()
+
+        if job_id:
+            log.info("Processing bulk job %s", job_id)
+            process(job_id)
+            continue
+
+        if not continuous:
+            log.info("No queued bulk jobs. Worker exiting.")
+            return
+
+        time.sleep(POLL)
+
+
+if __name__ == "__main__":
+    main()
