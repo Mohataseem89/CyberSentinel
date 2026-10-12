@@ -5,8 +5,13 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import func
 from models import Session, BulkScanJob, BulkScanItem
 from services.bulk_scan import BulkValidationError, parse_csv_bytes, csv_safe, can_transition
-
+import logging
 bulk_bp=Blueprint('bulk',__name__)
+
+import logging
+
+from services.bulk_trigger import trigger_bulk_worker
+log = logging.getLogger(__name__)
 MAX_BYTES=int(os.getenv('BULK_MAX_CSV_BYTES','1048576')); MAX_URLS=int(os.getenv('BULK_MAX_URLS_PER_JOB','1000')); MAX_ACTIVE=int(os.getenv('BULK_MAX_ACTIVE_JOBS_PER_USER','2')); MAX_DAILY=int(os.getenv('BULK_MAX_JOBS_PER_DAY','10')); RETENTION_HOURS=int(os.getenv('BULK_RETENTION_HOURS','24'))
 ACTIVE={'QUEUED','RUNNING','CANCELLING'}
 
