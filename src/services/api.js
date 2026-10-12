@@ -159,8 +159,26 @@ export const createBulkJob = async (file) => {
   return response.data;
 };
 export const listBulkJobs = async () => (await api.get('/api/bulk/jobs')).data;
-export const getBulkJob = async (id) => (await api.get(`/api/bulk/jobs/${encodeURIComponent(id)}`)).data;
-export const cancelBulkJob = async (id) => (await api.post(`/api/bulk/jobs/${encodeURIComponent(id)}/cancel`)).data;
+export const getBulkJob = async (
+  id,
+  { page = 1, perPage = 100, verdict = '' } = {}
+) => {
+  const params = {
+    page,
+    per_page: perPage,
+  };
+
+  if (verdict) {
+    params.verdict = verdict;
+  }
+
+  const response = await api.get(
+    `/api/bulk/jobs/${encodeURIComponent(id)}`,
+    { params }
+  );
+
+  return response.data;
+};export const cancelBulkJob = async (id) => (await api.post(`/api/bulk/jobs/${encodeURIComponent(id)}/cancel`)).data;
 export const downloadBulkResults = async (id) => {
   const response = await api.get(`/api/bulk/jobs/${encodeURIComponent(id)}/results.csv`, { responseType: 'blob' });
   const url = URL.createObjectURL(response.data);
@@ -172,6 +190,7 @@ export const downloadBulkResults = async (id) => {
   a.remove();
   URL.revokeObjectURL(url);
 };
+
 
 
 export const getFileScanCapabilities = async () => (await api.get('/api/file-scans/capabilities')).data;
