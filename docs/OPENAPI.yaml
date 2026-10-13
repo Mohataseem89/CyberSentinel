@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: CyberSentinel API
+  version: 1.0.0
+  description: Production API for URL, bulk URL, QR and file-risk analysis.
+servers:
+  - url: https://cybersentinel-1-ib7e.onrender.com
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      responses: {"200": {description: Healthy}}
+  /ready:
+    get:
+      summary: Readiness check
+      responses: {"200": {description: Ready}, "503": {description: Not ready}}
+  /analyze:
+    post:
+      summary: Analyze one HTTP/HTTPS URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [url]
+              properties: {url: {type: string, maxLength: 2048}}
+      responses: {"200": {description: Risk result}, "400": {description: Invalid URL}, "429": {description: Rate limited}}
+  /api/file-scans/capabilities:
+    get:
+      security: [{bearerAuth: []}]
+      summary: File-analysis capability and limits
+      responses: {"200": {description: Capabilities}}
+  /api/file-scans:
+    get:
+      security: [{bearerAuth: []}]
+      summary: List the authenticated user's recent file scans
+      responses: {"200": {description: Owner-scoped results}}
+    post:
+      security: [{bearerAuth: []}]
+      summary: Analyze an uploaded file without executing it
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, consent]
+              properties:
+                file: {type: string, format: binary}
+                consent: {type: string, enum: ['true']}
+      responses: {"200": {description: Completed analysis}, "400": {description: Invalid request}, "413": {description: Too large}, "415": {description: Unsupported or mismatched type}, "429": {description: Quota exceeded}, "503": {description: Feature disabled}}
+  /api/file-scans/{job_id}:
+    get:
+      security: [{bearerAuth: []}]
+      parameters: [{name: job_id, in: path, required: true, schema: {type: string, format: uuid}}]
+      summary: Read one owner-scoped file result
+      responses: {"200": {description: Result}, "404": {description: Not found}}
+  /api/bulk/jobs:
+    get:
+      security: [{bearerAuth: []}]
+      summary: List owner-scoped bulk jobs
+      responses: {"200": {description: Jobs}}
+    post:
+      security: [{bearerAuth: []}]
+      summary: Create a bulk URL scan from CSV
+      responses: {"202": {description: Job queued}, "400": {description: Invalid CSV}, "429": {description: Quota exceeded}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

@@ -78,3 +78,28 @@ def check_url_reputation(url: str) -> dict:
     except (requests.RequestException, ValueError, KeyError, TypeError):
         logger.warning("VirusTotal lookup failed", exc_info=True)
         return _unavailable("VirusTotal reputation is temporarily unavailable.", "request_failed")
+
+
+def check_file_hash_reputation(sha256: str) -> dict:
+    """Look up an existing VirusTotal file report by SHA-256. File bytes are never uploaded."""
+    api_key=os.environ.get("VIRUSTOTAL_API_KEY")
+    if not api_key:
+        return _unavailable("VirusTotal is not configured.","not_configured")
+    if not isinstance(sha256,str) or len(sha256)!=64 or any(c not in "0123456789abcdefABCDEF" for c in sha256):
+        return _unavailable("Invalid file hash.","invalid_hash")
+    try:
+        response=requests.get(f"https://www.virustotal.com/api/v3/files/{sha256.lower()}",headers={"x-apikey":api_key},timeout=(2,8),allow_redirects=False)
+        if response.status_code==200:
+            stats=response.json()["data"]["attributes"].get("last_analysis_stats",{})
+            malicious=int(stats.get("malicious",0)); suspicious=int(stats.get("suspicious",0)); harmless=int(stats.get("harmless",0)); undetected=int(stats.get("undetected",0))
+            total=malicious+suspicious+harmless+undetected; positives=malicious+suspicious
+            return {"available":True,"evidence_available":total>0,"malicious":malicious,"suspicious":suspicious,"positives":positives,"total":total,"message":f"{positives}/{total} vendors flagged this file hash." if total else "VirusTotal returned no vendor evidence."}
+        if response.status_code==404:
+            return {"available":True,"evidence_available":False,"malicious":0,"suspicious":0,"positives":0,"total":0,"message":"VirusTotal has no existing report for this file hash."}
+        if response.status_code==429:
+            return _unavailable("VirusTotal quota is temporarily exhausted.","quota_exhausted")
+        logger.warning("VirusTotal file-hash lookup failed with status %s",response.status_code)
+        return _unavailable("VirusTotal file reputation is temporarily unavailable.","provider_error")
+    except (requests.RequestException,ValueError,KeyError,TypeError):
+        logger.warning("VirusTotal file-hash lookup failed",exc_info=True)
+        return _unavailable("VirusTotal file reputation is temporarily unavailable.","request_failed")

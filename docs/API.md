@@ -115,6 +115,22 @@ Treat runtime model replacement as an operationally controlled action. Review th
 ### `POST /api/qr/scan`
 Accepts multipart input for QR URL extraction/scanning. Apply upload-size and content-type controls at both application and reverse-proxy layers.
 
+## File analysis
+
+All file-analysis endpoints require JWT authentication. Uploads require explicit consent and are treated as untrusted bytes; CyberSentinel does not execute uploaded content.
+
+### `GET /api/file-scans/capabilities`
+Returns whether analysis is enabled plus accepted types and size limits.
+
+### `POST /api/file-scans`
+Accepts multipart `file` and `consent=true`. The production path performs supported static checks synchronously and uses local ClamAV when configured; otherwise it performs a VirusTotal SHA-256 reputation lookup without uploading file bytes. The original temporary file is deleted after analysis. Scanner failure returns an incomplete/unknown-style result rather than a clean verdict.
+
+### `GET /api/file-scans`
+Lists only the authenticated user's retained scan metadata/results.
+
+### `GET /api/file-scans/{job_id}`
+Returns a result only when it belongs to the authenticated user.
+
 ## Disabled legacy analytics
 
 `backend/analytics.py` remains in the repository for historical/refactoring purposes, but its blueprint is not registered in the active app because the previous global queries could expose data across users. Do not document those endpoints as production APIs until they are rewritten and tested as owner-scoped aggregates.

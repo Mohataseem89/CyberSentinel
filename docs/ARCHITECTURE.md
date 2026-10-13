@@ -53,3 +53,7 @@ PostgreSQL
 ## Scaling considerations
 
 The built-in fixed-window limiter stores counters in process memory. Multiple backend replicas would each have independent counters, so production horizontal scaling requires a shared rate-limit backend. Database connection pooling, structured logging, centralized metrics, backup policy, and secret management are deployment responsibilities.
+
+## File scan flow
+
+File analysis runs in the API container because Render services do not share an ephemeral filesystem. The request streams the upload to a bounded temporary quarantine path, validates type from file content, performs HTML static analysis when applicable, uses local ClamAV `INSTREAM` when available, otherwise looks up only the SHA-256 hash with VirusTotal, persists only metadata/results, and deletes the original before returning. A scanner outage fails closed as `UNABLE_TO_COMPLETE`; it is never converted to a clean result.

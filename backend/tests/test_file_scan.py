@@ -3,6 +3,7 @@ from unittest.mock import patch
 from services.file_scan import safe_original_name, stream_upload
 from services.html_static_analyzer import analyze_html_bytes
 from services.clamav_adapter import ClamAVAdapter, ClamAVError
+from services.file_analysis import analyze_file
 
 class Upload:
     def __init__(self,data):
@@ -28,6 +29,24 @@ class FileScanTests(unittest.TestCase):
     def test_clamav_unavailable_is_not_clean(self,_):
         with self.assertRaises(ClamAVError) as cm: ClamAVAdapter().scan_file(__file__)
         self.assertEqual(cm.exception.code,'scanner_unavailable')
+
+    @patch('services.file_analysis.ClamAVAdapter.ping', return_value=True)
+    @patch('services.file_analysis.ClamAVAdapter.scan_file', return_value={'status':'clean','signature':None})
+    def test_clean_text_completes_without_claiming_guaranteed_safety(self,_,__):
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(b'hello world'); name=f.name
+        try:
+            result=analyze_file(name,'text','0'*64)
+            self.assertEqual(result['status'],'COMPLETED')
+            self.assertEqual(result['verdict'],'CLEAN_CHECKS_COMPLETED')
+        finally: os.remove(name)
+
+    @patch('services.file_analysis.check_file_hash_reputation', return_value={'available':True,'evidence_available':False})
+    @patch('services.file_analysis.ClamAVAdapter.ping', return_value=False)
+    def test_scanner_unavailable_never_becomes_clean(self,_,__):
+        result=analyze_file(__file__,'text','0'*64)
+        self.assertEqual(result['verdict'],'UNABLE_TO_COMPLETE')
+        self.assertEqual(result['error_code'],'malware_evidence_unavailable')
 
 class ClamAVIntegrationTests(unittest.TestCase):
     @unittest.skipUnless(os.getenv('CLAMAV_INTEGRATION_TEST')=='1','set CLAMAV_INTEGRATION_TEST=1 with local clamd')

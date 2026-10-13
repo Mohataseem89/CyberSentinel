@@ -46,6 +46,12 @@ api.interceptors.response.use(
     if (error.response?.status === 400) {
       throw new Error(error.response?.data?.error || 'Invalid request');
     }
+    if (error.response?.status === 415) {
+      throw new Error(error.response?.data?.error || 'Unsupported or mismatched file type.');
+    }
+    if (error.response?.status === 503) {
+      throw new Error(error.response?.data?.error || 'Service temporarily unavailable.');
+    }
     if (error.response?.status === 500) {
       throw new Error(error.response?.data?.error || 'Server error. Please try again later.');
     }

@@ -6,6 +6,7 @@ from sqlalchemy import func
 from models import Session, FileScanJob
 from services.file_scan import stream_upload, safe_original_name, public_result
 from services.file_types import detect_file, FileTypeError
+from services.file_analysis import analyze_file, apply_result
 
 file_scan_bp=Blueprint('file_scan',__name__)
 ENABLED=os.getenv('FILE_SCAN_ENABLED','false').lower()=='true'
@@ -47,8 +48,14 @@ def create_file_scan():
             os.remove(path); path=None
             return jsonify({'error':e.message,'code':e.code}),415
         job=FileScanJob(public_id=str(uuid.uuid4()),user_id=uid,status='QUEUED',original_name=safe_original_name(upload.filename),storage_path=path,sha256=digest,size_bytes=size,detected_kind=detected.kind,detected_mime=detected.mime,created_at=now,expires_at=now+timedelta(hours=RETENTION))
-        s.add(job); s.commit(); path=None
-        return jsonify({'job':public_result(job)}),202
+        s.add(job); s.commit()
+        job.status='SCANNING'; job.started_at=datetime.utcnow(); job.attempts=1; s.commit()
+        result=analyze_file(path, detected.kind, digest)
+        apply_result(job,result); job.storage_path=None; s.commit()
+        try: os.remove(path)
+        except OSError: pass
+        path=None
+        return jsonify({'job':public_result(job)}),200
     finally:
         if path:
             try: os.remove(path)
