@@ -6,10 +6,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from models import Base, BulkScanItem, BulkScanJob, User
 from workers import bulk_worker
-
+import logging
 
 class BulkWorkerTests(unittest.TestCase):
     def setUp(self):
+        logging.disable(logging.CRITICAL)
         engine=create_engine("sqlite://",connect_args={"check_same_thread":False},poolclass=StaticPool);Base.metadata.create_all(engine);self.Session=sessionmaker(bind=engine)
         s=self.Session();u=User(username="worker",email="worker@test",password_hash="x");s.add(u);s.commit();self.uid=u.id;s.close()
         self.sp=patch("workers.bulk_worker.Session",self.Session);self.sp.start();self.addCleanup(self.sp.stop)
@@ -42,6 +43,7 @@ class BulkWorkerTests(unittest.TestCase):
         s=self.Session();j=s.get(BulkScanJob,jid);self.assertEqual(j.status,"CANCELLED");self.assertTrue(all(i.normalized_url is None for i in j.items));s.close()
 
     def test_recover_stale_requeues_running_item(self):
+        logging.disable(logging.NOTSET)
         jid=self.job();s=self.Session();j=s.get(BulkScanJob,jid);j.started_at=datetime.utcnow()-timedelta(seconds=bulk_worker.STALE+1);j.items[0].status="RUNNING";s.commit();s.close();bulk_worker.recover_stale()
         s=self.Session();j=s.get(BulkScanJob,jid);self.assertEqual(j.status,"QUEUED");self.assertEqual(j.items[0].status,"QUEUED");s.close()
 

@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { Camera, Upload, AlertTriangle, CheckCircle, XCircle, QrCode, Link, Shield, Zap } from 'lucide-react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import { scanQRCode } from '../../services/api';
 

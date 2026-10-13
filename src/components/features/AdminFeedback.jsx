@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   getAllFeedback,
@@ -19,7 +19,7 @@ export default function AdminFeedback() {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  const loadFeedback = async () => {
+  const loadFeedback = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -42,11 +42,11 @@ export default function AdminFeedback() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
-    loadFeedback();
-  }, [filter]);
+  loadFeedback();
+}, [loadFeedback]);
 
   const handleApprove = async (id) => {
     try {

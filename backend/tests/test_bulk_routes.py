@@ -21,8 +21,8 @@ class BulkRouteTests(unittest.TestCase):
         self.user2 = User(username="u2", email="u2@test", password_hash="x")
         s.add_all([self.user1, self.user2]); s.commit()
         self.u1, self.u2 = self.user1.id, self.user2.id
-        s.close()
-        app = Flask(__name__); app.config.update(JWT_SECRET_KEY="test-secret", TESTING=True)
+        s.close() 
+        app = Flask(__name__); app.config.update(JWT_SECRET_KEY="cybersentinel-test-jwt-secret-key-32-bytes-minimum", TESTING=True)
         JWTManager(app); app.register_blueprint(bulk_bp, url_prefix="/api")
         self.app, self.client = app, app.test_client()
         with app.app_context():

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 
 import { loginUser } from '../../services/api';

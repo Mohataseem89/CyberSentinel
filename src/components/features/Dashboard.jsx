@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Shield,
   AlertTriangle,
@@ -26,6 +26,15 @@ import {
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+const normalizeStats = (data = {}) => ({
+  total_scans: Number(data.total_scans ?? data.totalScans ?? 0),
+  benign_scans: Number(data.benign_scans ?? data.benignScans ?? 0),
+  suspicious_scans: Number(data.suspicious_scans ?? data.suspiciousScans ?? 0),
+  phishing_scans: Number(data.phishing_scans ?? data.phishingScans ?? 0),
+  avg_threat_score: Number(data.avg_threat_score ?? data.avgThreatScore ?? 0),
+  scans_today: Number(data.scans_today ?? data.scansToday ?? 0),
+  blocked_threats: Number(data.blocked_threats ?? data.blockedThreats ?? 0)
+});
 export default function Dashboard() {
   const [stats, setStats] = useState({
     total_scans: 0,
@@ -40,20 +49,11 @@ export default function Dashboard() {
   const [scanHistory, setScanHistory] = useState([]);
   const [dailyScans, setDailyScans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [filter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  const normalizeStats = (data = {}) => ({
-    total_scans: Number(data.total_scans ?? data.totalScans ?? 0),
-    benign_scans: Number(data.benign_scans ?? data.benignScans ?? 0),
-    suspicious_scans: Number(data.suspicious_scans ?? data.suspiciousScans ?? 0),
-    phishing_scans: Number(data.phishing_scans ?? data.phishingScans ?? 0),
-    avg_threat_score: Number(data.avg_threat_score ?? data.avgThreatScore ?? 0),
-    scans_today: Number(data.scans_today ?? data.scansToday ?? 0),
-    blocked_threats: Number(data.blocked_threats ?? data.blockedThreats ?? 0)
-  });
 
-  const loadDashboardData = async (showLoader = true) => {
+  const loadDashboardData = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
     try {
       const response = await api.get('/api/history?limit=100');
@@ -76,14 +76,20 @@ export default function Dashboard() {
     } catch (error) {
       toast.error(error?.message || 'Dashboard data could not be loaded.');
     } finally { if (showLoader) setLoading(false); }
-  };
-
-  useEffect(() => { loadDashboardData(true); }, []);
-
-  useEffect(() => {
-    const interval=setInterval(()=>loadDashboardData(false),30000);
-    return () => clearInterval(interval);
   }, []);
+
+ useEffect(() => {
+  loadDashboardData(true);
+}, [loadDashboardData]);
+
+useEffect(() => {
+  const interval = setInterval(
+    () => loadDashboardData(false),
+    30000
+  );
+
+  return () => clearInterval(interval);
+}, [loadDashboardData]);
 
   const refreshData = async () => {
     setRefreshing(true);

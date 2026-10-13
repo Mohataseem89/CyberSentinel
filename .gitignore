@@ -36,3 +36,9 @@ backend/var/
 uploads/
 test-results/
 playwright-report/
+
+
+# Python generated files
+*.py[cod]
+*$py.class
+.pytest_cache/
