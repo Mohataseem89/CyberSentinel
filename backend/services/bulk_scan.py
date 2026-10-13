@@ -27,12 +27,13 @@ def parse_csv_bytes(raw,max_rows):
     try: reader=csv.DictReader(io.StringIO(text,newline=''))
     except csv.Error as e: raise BulkValidationError('Malformed CSV.','malformed_csv') from e
     if not reader.fieldnames or 'url' not in [h.strip().lower() for h in reader.fieldnames if h]: raise BulkValidationError('CSV must contain a url column.','missing_url_column')
-    key=next(h for h in reader.fieldnames if h and h.strip().lower()=='url'); rows=[]; seen=set(); errors=[]
+    key=next(h for h in reader.fieldnames if h and h.strip().lower()=='url'); rows=[]; seen=set(); errors=[]; input_rows=0
     try:
       for line,row in enumerate(reader,start=2):
         value=(row.get(key) or '').strip()
         if not value: continue
-        if len(rows)>=max_rows: raise BulkValidationError(f'CSV exceeds the {max_rows} URL limit.','too_many_rows')
+        input_rows += 1
+        if input_rows > max_rows: raise BulkValidationError(f'CSV exceeds the {max_rows} URL limit.','too_many_rows')
         try: normalized=normalize_url(value).url
         except URLValidationError as e: errors.append({'row':line,'error':e.message}); continue
         if normalized in seen: continue

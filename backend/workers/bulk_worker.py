@@ -41,7 +41,12 @@ def process(job_id):
             job=s.get(BulkScanJob,job_id)
             if not job or job.status not in {'RUNNING','CANCELLING'}: return
             if job.expires_at<=datetime.utcnow(): job.status='EXPIRED';job.completed_at=datetime.utcnow();s.commit();return
-            if job.status=='CANCELLING': job.status='CANCELLED';job.completed_at=datetime.utcnow();s.commit();return
+            if job.status=='CANCELLING':
+                job.status='CANCELLED'; job.completed_at=datetime.utcnow()
+                for pending in job.items:
+                    if pending.status in {'QUEUED','RUNNING'}:
+                        pending.normalized_url=None
+                s.commit(); return
             item=s.query(BulkScanItem).filter_by(job_id=job_id,status='QUEUED').order_by(BulkScanItem.row_number).first()
             if not item:
                 job.status='PARTIALLY_COMPLETED' if job.failed else 'COMPLETED';job.completed_at=datetime.utcnow();s.commit();return

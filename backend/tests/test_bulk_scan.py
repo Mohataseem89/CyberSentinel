@@ -11,4 +11,12 @@ class BulkScanTests(unittest.TestCase):
   with self.assertRaises(BulkValidationError):parse_csv_bytes(b'url\nhttps://a.example\nhttps://b.example\n',1)
  def test_csv_formula_export_is_neutralized(self):self.assertEqual(csv_safe('=1+1'),"'=1+1")
  def test_state_machine_rejects_invalid_transition(self):self.assertFalse(can_transition('COMPLETED','RUNNING'));self.assertTrue(can_transition('RUNNING','CANCELLING'))
+
+ def test_utf8_bom_is_supported(self):
+  rows,errors=parse_csv_bytes(b'\xef\xbb\xbfurl\nhttps://example.com\n',10);self.assertEqual(len(rows),1);self.assertEqual(errors,[])
+ def test_large_csv_up_to_limit(self):
+  raw=('url\n'+'\n'.join(f'https://host{i}.example' for i in range(1000))+'\n').encode();rows,errors=parse_csv_bytes(raw,1000);self.assertEqual(len(rows),1000);self.assertEqual(errors,[])
+ def test_csv_over_limit_is_rejected(self):
+  raw=('url\n'+'\n'.join(f'https://host{i}.example' for i in range(1001))+'\n').encode();
+  with self.assertRaises(BulkValidationError):parse_csv_bytes(raw,1000)
 if __name__=='__main__':unittest.main()

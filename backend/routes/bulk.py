@@ -245,20 +245,59 @@ def get_job(job_id):
                 "error": "Job not found."
             }), 404
 
+        try:
+            page = int(request.args.get("page", "1"))
+            per_page = int(request.args.get("per_page", "100"))
+        except (TypeError, ValueError):
+            return jsonify({
+                "error": "page and per_page must be integers.",
+                "code": "invalid_pagination",
+            }), 400
+
+        if page < 1:
+            return jsonify({
+                "error": "page must be at least 1.",
+                "code": "invalid_page",
+            }), 400
+
+        if per_page < 1 or per_page > 200:
+            return jsonify({
+                "error": "per_page must be between 1 and 200.",
+                "code": "invalid_page_size",
+            }), 400
+
+        verdict = request.args.get("verdict", "").strip()
+        allowed_verdicts = {"Safe", "Suspicious", "Dangerous", "Unknown"}
+        if verdict and verdict not in allowed_verdicts:
+            return jsonify({
+                "error": "Invalid verdict filter.",
+                "code": "invalid_verdict",
+            }), 400
+
+        query = session.query(BulkScanItem).filter_by(job_id=job.id)
+        if verdict:
+            query = query.filter(BulkScanItem.final_verdict == verdict)
+
+        total_items = query.count()
+        total_pages = max((total_items + per_page - 1) // per_page, 1)
         items = (
-            session.query(BulkScanItem)
-            .filter_by(job_id=job.id)
-            .order_by(BulkScanItem.row_number)
-            .limit(200)
+            query.order_by(BulkScanItem.row_number)
+            .offset((page - 1) * per_page)
+            .limit(per_page)
             .all()
         )
 
         return jsonify({
             "job": serialize(job),
-            "results": [
-                item.to_dict()
-                for item in items
-            ],
+            "results": [item.to_dict() for item in items],
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total_items": total_items,
+                "total_pages": total_pages,
+                "has_previous": page > 1,
+                "has_next": page < total_pages,
+            },
         })
 
     finally:
@@ -301,6 +340,12 @@ def cancel_job(job_id):
 
         if target == "CANCELLED":
             job.completed_at = datetime.utcnow()
+            # A queued cancellation must not retain scan-capable raw URLs.
+            (
+                session.query(BulkScanItem)
+                .filter(BulkScanItem.job_id == job.id)
+                .update({BulkScanItem.normalized_url: None}, synchronize_session=False)
+            )
 
         session.commit()
 
